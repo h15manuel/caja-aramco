@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import { LayoutDashboard, Clock, Search, CalendarDays, Settings, ShieldAlert, ShieldOff } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useShiftNotifications } from '@/hooks/useShiftNotifications';
