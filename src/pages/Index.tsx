@@ -21,12 +21,15 @@ import {
 
 function usePersistOpen(key: string, defaultValue = true) {
   const [open, setOpen] = useState(() => {
-    const stored = sessionStorage.getItem(key);
+    if (typeof window === 'undefined') return defaultValue;
+    const stored = window.sessionStorage.getItem(key);
     return stored !== null ? stored === '1' : defaultValue;
   });
   const toggle = useCallback((v: boolean) => {
     setOpen(v);
-    sessionStorage.setItem(key, v ? '1' : '0');
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(key, v ? '1' : '0');
+    }
   }, [key]);
   return [open, toggle] as const;
 }
