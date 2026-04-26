@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { LayoutDashboard, Clock, Search, CalendarDays, Settings, ShieldAlert, ShieldOff } from 'lucide-react';
+import { LayoutDashboard, Clock, Search, CalendarDays, Settings } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useShiftNotifications } from '@/hooks/useShiftNotifications';
+import { CashboxManagerDialog } from '@/components/CashboxManagerDialog';
 
 const tabs = [
   { path: '/', icon: LayoutDashboard, label: 'Caja' },
@@ -15,7 +16,7 @@ const tabs = [
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { state, toggleShield } = useApp();
+  const { state, activeCashbox } = useApp();
   useShiftNotifications(state);
 
   const [zoom, setZoom] = useState(1);
@@ -35,27 +36,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return () => { window.removeEventListener('storage', handler); clearInterval(interval); };
   }, []);
 
+  const onCajaPage = location.pathname === '/';
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Top bar */}
-      <header className="flex items-center justify-between px-5 pt-4 pb-2">
-        <h1 className="text-lg font-bold text-foreground tracking-tight">Control de Caja</h1>
-        <button
-          onClick={toggleShield}
-          className={`p-2.5 rounded-full transition-all ${
-            state.shieldMode
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-secondary text-muted-foreground hover:text-foreground'
-          }`}
-          title={state.shieldMode ? 'Desactivar escudo' : 'Activar escudo'}
-        >
-          {state.shieldMode ? <ShieldAlert className="w-5 h-5" /> : <ShieldOff className="w-5 h-5" />}
-        </button>
+      <header className="flex items-center justify-between px-5 pt-4 pb-2 gap-3">
+        <div className="flex items-baseline gap-2 min-w-0">
+          <h1 className="text-lg font-bold text-foreground tracking-tight shrink-0">Control de Caja</h1>
+          {onCajaPage && (
+            <span className="text-sm font-medium text-primary truncate">· {activeCashbox.name}</span>
+          )}
+        </div>
+        <CashboxManagerDialog />
       </header>
 
       {/* Content */}
       <main className="flex-1 overflow-y-auto px-4 pb-24" style={{ zoom: zoom }}>
-        <style dangerouslySetInnerHTML={{ __html: `:root { --shield-blur: ${state.shieldMode ? '8px' : '0px'}; }` }} />
+        <style dangerouslySetInnerHTML={{ __html: `:root { --shield-blur: 0px; }` }} />
         {children}
       </main>
 
