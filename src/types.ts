@@ -50,6 +50,8 @@ export interface ShiftRecord {
   diferencia: number;
   status: 'cuadrada' | 'sobrante' | 'faltante';
   entries: CashEntry[];
+  cashboxId?: string;
+  cashboxName?: string;
 }
 
 export interface CustomShiftType {
@@ -69,11 +71,26 @@ export interface DayShift {
   hours?: number;
 }
 
-export interface AppState {
+export interface Cashbox {
+  id: string;
+  name: string;
   zAmount: number;
   tipsTotal: number;
   cashDrawer: number;
   entries: CashEntry[];
+}
+
+export interface AppState {
+  // Multi-cashbox state
+  cashboxes: Cashbox[];
+  activeCashboxId: string;
+
+  // Legacy single-cashbox fields (kept optional for backwards compatibility / migration)
+  zAmount?: number;
+  tipsTotal?: number;
+  cashDrawer?: number;
+  entries?: CashEntry[];
+
   companies: Company[];
   vehicles: Vehicle[];
   shifts: DayShift[];
@@ -87,11 +104,20 @@ export interface AppState {
   notificationTime: string; // HH:mm format
 }
 
+const DEFAULT_CASHBOX_ID = 'cashbox-default';
+
 export const defaultAppState: AppState = {
-  zAmount: 0,
-  tipsTotal: 0,
-  cashDrawer: 0,
-  entries: [],
+  cashboxes: [
+    {
+      id: DEFAULT_CASHBOX_ID,
+      name: 'Caja 1',
+      zAmount: 0,
+      tipsTotal: 0,
+      cashDrawer: 0,
+      entries: [],
+    },
+  ],
+  activeCashboxId: DEFAULT_CASHBOX_ID,
   companies: [],
   vehicles: [],
   shifts: [],
@@ -103,3 +129,4 @@ export const defaultAppState: AppState = {
   notificationsEnabled: false,
   notificationTime: '20:00',
 };
+
