@@ -101,7 +101,10 @@ export default function SettingsPage() {
         }
         const restored: AppState = { ...defaultAppState, ...parsed };
         setState(restored);
-        toast.success(`Respaldo restaurado: ${restored.shiftHistory.length} turnos, ${restored.entries.length} movimientos`);
+        const totalEntries =
+          (restored.cashboxes?.reduce((n, b) => n + b.entries.length, 0) ?? 0) +
+          (restored.entries?.length ?? 0);
+        toast.success(`Respaldo restaurado: ${restored.shiftHistory.length} turnos, ${totalEntries} movimientos`);
       } catch {
         toast.error('Error: el archivo no es un respaldo válido');
       }
