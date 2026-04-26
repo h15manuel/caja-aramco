@@ -67,7 +67,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             return (
               <button
                 key={tab.path}
-                onClick={() => navigate(tab.path)}
+                onClick={() => navigate({ to: tab.path })}
                 className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-3xl transition-all ${
                   active
                     ? 'bg-primary/15 text-primary'
