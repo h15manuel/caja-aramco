@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShiftsRouteImport } from './routes/shifts'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as FleetRouteImport } from './routes/fleet'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const ShiftsRoute = ShiftsRouteImport.update({
   id: '/shifts',
   path: '/shifts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/fleet': typeof FleetRoute
   '/history': typeof HistoryRoute
+  '/settings': typeof SettingsRoute
   '/shifts': typeof ShiftsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/fleet': typeof FleetRoute
   '/history': typeof HistoryRoute
+  '/settings': typeof SettingsRoute
   '/shifts': typeof ShiftsRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/fleet': typeof FleetRoute
   '/history': typeof HistoryRoute
+  '/settings': typeof SettingsRoute
   '/shifts': typeof ShiftsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/fleet' | '/history' | '/shifts'
+  fullPaths: '/' | '/fleet' | '/history' | '/settings' | '/shifts'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/fleet' | '/history' | '/shifts'
-  id: '__root__' | '/' | '/fleet' | '/history' | '/shifts'
+  to: '/' | '/fleet' | '/history' | '/settings' | '/shifts'
+  id: '__root__' | '/' | '/fleet' | '/history' | '/settings' | '/shifts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FleetRoute: typeof FleetRoute
   HistoryRoute: typeof HistoryRoute
+  SettingsRoute: typeof SettingsRoute
   ShiftsRoute: typeof ShiftsRoute
 }
 
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/shifts'
       fullPath: '/shifts'
       preLoaderRoute: typeof ShiftsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FleetRoute: FleetRoute,
   HistoryRoute: HistoryRoute,
+  SettingsRoute: SettingsRoute,
   ShiftsRoute: ShiftsRoute,
 }
 export const routeTree = rootRouteImport
