@@ -49,6 +49,7 @@ export default function SettingsPage() {
   useEffect(() => {
     localStorage.setItem('uiZoom', zoom.toString());
     document.documentElement.style.setProperty('--ui-zoom', (zoom / 100).toString());
+    window.dispatchEvent(new Event('uiZoomChange'));
   }, [zoom]);
 
   useEffect(() => {
