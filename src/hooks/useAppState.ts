@@ -93,11 +93,21 @@ export function useAppState() {
       tipsTotal: 0,
       cashDrawer: 0,
       entries: [],
+      active: true,
     };
     setPersisted(s => ({
       ...s,
       cashboxes: [...s.cashboxes, newBox],
       activeCashboxId: newBox.id,
+    }));
+  }, []);
+
+  const toggleCashboxActive = useCallback((id: string) => {
+    setPersisted(s => ({
+      ...s,
+      cashboxes: s.cashboxes.map(b =>
+        b.id === id ? { ...b, active: !(b.active ?? true) } : b,
+      ),
     }));
   }, []);
 
