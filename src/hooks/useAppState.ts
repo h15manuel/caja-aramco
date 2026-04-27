@@ -292,5 +292,6 @@ export function useAppState() {
     renameCashbox,
     removeCashbox,
     setActiveCashbox,
+    toggleCashboxActive,
   };
 }
