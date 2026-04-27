@@ -24,18 +24,44 @@ export default function History() {
     [state.shiftHistory]
   );
 
+  // Precompute per-shift metrics once and cache by shift id, so re-renders
+  // (e.g. typing in search, expanding a card) don't recompute.
+  const metricsById = useMemo(() => {
+    const map = new Map<string, {
+      credits: CashEntry[];
+      cashCredits: CashEntry[];
+      cashCreditTotal: number;
+      creditsTotal: number;
+      totalidad: number;
+      nonCredit: CashEntry[];
+      formattedDate: string;
+    }>();
+    for (const shift of allShifts) {
+      const credits = shift.entries.filter(e => e.type === EntryType.CREDIT);
+      const cashCredits = credits.filter(e => e.cashCredit);
+      const cashCreditTotal = cashCredits.reduce((s, e) => s + e.amount, 0);
+      const creditsTotal = credits.reduce((s, e) => s + e.amount, 0);
+      const totalidad = shift.depositsTotal + shift.cashDrawer + cashCreditTotal;
+      const nonCredit = shift.entries.filter(e => e.type !== EntryType.CREDIT);
+      const formattedDate = format(new Date(shift.closedAt), "EEEE d 'de' MMMM yyyy HH:mm", { locale: es }).toLowerCase();
+      map.set(shift.id, { credits, cashCredits, cashCreditTotal, creditsTotal, totalidad, nonCredit, formattedDate });
+    }
+    return map;
+  }, [allShifts]);
+
   const filtered = useMemo(() => {
     if (!search.trim()) return allShifts;
     const q = search.toLowerCase().trim();
     return allShifts.filter(shift => {
-      const d = new Date(shift.closedAt);
-      const formatted = format(d, "EEEE d 'de' MMMM yyyy HH:mm", { locale: es }).toLowerCase();
-      return formatted.includes(q) || shift.date.includes(q);
+      const cached = metricsById.get(shift.id);
+      return (cached?.formattedDate.includes(q) ?? false) || shift.date.includes(q);
     });
-  }, [allShifts, search]);
+  }, [allShifts, search, metricsById]);
 
-  // Derive new metrics from entries (for backward compat with old shift records)
   const computeMetrics = (shift: ShiftRecord) => {
+    const cached = metricsById.get(shift.id);
+    if (cached) return cached;
+    // Fallback (should not happen)
     const credits = shift.entries.filter(e => e.type === EntryType.CREDIT);
     const cashCredits = credits.filter(e => e.cashCredit);
     const cashCreditTotal = cashCredits.reduce((s, e) => s + e.amount, 0);
