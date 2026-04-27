@@ -34,9 +34,14 @@ const presetColors = ['#1abc9c', '#3498db', '#9b59b6', '#e74c3c', '#f39c12', '#2
 export default function SettingsPage() {
   const { state, setState } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isDark, setIsDark] = useState(() => !document.documentElement.classList.contains('light'));
-  const [primaryColor, setPrimaryColor] = useState(() => localStorage.getItem('primaryColor') || '#1abc9c');
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== 'undefined' ? !document.documentElement.classList.contains('light') : true,
+  );
+  const [primaryColor, setPrimaryColor] = useState(() =>
+    typeof localStorage !== 'undefined' ? localStorage.getItem('primaryColor') || '#1abc9c' : '#1abc9c',
+  );
   const [zoom, setZoom] = useState(() => {
+    if (typeof localStorage === 'undefined') return 100;
     const saved = localStorage.getItem('uiZoom');
     return saved ? parseInt(saved) : 100;
   });
