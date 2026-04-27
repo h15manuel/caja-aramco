@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { formatCLP, parseCLPInput } from '@/lib/format';
 import { EntryType, CashEntry, formatDenominations } from '@/types';
@@ -74,8 +74,14 @@ function CreditSubgroup({ group, gi, onEdit }: { group: CashEntry[]; gi: number;
 }
 
 export default function Dashboard() {
-  const { state, setZAmount, closeShift, depositsTotal, cashCreditTotal, meta, efectivoReal, diferencia, status } = useApp();
+  const { state, setZAmount, closeShift, depositsTotal, cashCreditTotal, meta, efectivoReal, diferencia, status, activeCashbox } = useApp();
   const [zInput, setZInput] = useState(state.zAmount > 0 ? state.zAmount.toString() : '');
+
+  // Resync local Z input when the active cashbox changes
+  useEffect(() => {
+    setZInput(state.zAmount > 0 ? state.zAmount.toString() : '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCashbox.id]);
   const [editingEntry, setEditingEntry] = useState<CashEntry | null>(null);
   const [movOpen, setMovOpen] = usePersistOpen('col-mov', true);
   const [credOpen, setCredOpen] = usePersistOpen('col-cred', true);
