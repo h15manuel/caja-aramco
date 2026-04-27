@@ -19,18 +19,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem('uiZoom');
-    if (saved) setZoom(parseInt(saved) / 100);
-    const handler = () => {
+    const readZoom = () => {
       const saved = localStorage.getItem('uiZoom');
       if (saved) setZoom(parseInt(saved) / 100);
     };
-    window.addEventListener('storage', handler);
-    const interval = setInterval(() => {
-      const val = parseFloat(document.documentElement.style.getPropertyValue('--ui-zoom') || '1');
-      setZoom(val);
-    }, 300);
-    return () => { window.removeEventListener('storage', handler); clearInterval(interval); };
+    readZoom();
+    window.addEventListener('storage', readZoom);
+    window.addEventListener('uiZoomChange', readZoom);
+    return () => {
+      window.removeEventListener('storage', readZoom);
+      window.removeEventListener('uiZoomChange', readZoom);
+    };
   }, []);
 
   const onCajaPage = location.pathname === '/';
