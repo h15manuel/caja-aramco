@@ -93,11 +93,21 @@ export function useAppState() {
       tipsTotal: 0,
       cashDrawer: 0,
       entries: [],
+      active: true,
     };
     setPersisted(s => ({
       ...s,
       cashboxes: [...s.cashboxes, newBox],
       activeCashboxId: newBox.id,
+    }));
+  }, []);
+
+  const toggleCashboxActive = useCallback((id: string) => {
+    setPersisted(s => ({
+      ...s,
+      cashboxes: s.cashboxes.map(b =>
+        b.id === id ? { ...b, active: !(b.active ?? true) } : b,
+      ),
     }));
   }, []);
 
@@ -162,11 +172,21 @@ export function useAppState() {
         cashboxName: box.name,
       };
 
+      const freshId = crypto.randomUUID();
       return {
         ...s,
-        cashboxes: s.cashboxes.map(b =>
-          b.id === box.id ? { ...b, zAmount: 0, tipsTotal: 0, cashDrawer: 0, entries: [] } : b,
-        ),
+        cashboxes: [
+          {
+            id: freshId,
+            name: 'Caja 1',
+            zAmount: 0,
+            tipsTotal: 0,
+            cashDrawer: 0,
+            entries: [],
+            active: true,
+          },
+        ],
+        activeCashboxId: freshId,
         shiftHistory: [...s.shiftHistory, record],
       };
     });
@@ -272,5 +292,6 @@ export function useAppState() {
     renameCashbox,
     removeCashbox,
     setActiveCashbox,
+    toggleCashboxActive,
   };
 }

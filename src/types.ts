@@ -78,6 +78,7 @@ export interface Cashbox {
   tipsTotal: number;
   cashDrawer: number;
   entries: CashEntry[];
+  active?: boolean; // true = persona en turno
 }
 
 export interface AppState {
@@ -115,6 +116,7 @@ export const defaultAppState: AppState = {
       tipsTotal: 0,
       cashDrawer: 0,
       entries: [],
+      active: true,
     },
   ],
   activeCashboxId: DEFAULT_CASHBOX_ID,
