@@ -116,6 +116,7 @@ export const defaultAppState: AppState = {
       tipsTotal: 0,
       cashDrawer: 0,
       entries: [],
+      active: true,
     },
   ],
   activeCashboxId: DEFAULT_CASHBOX_ID,
