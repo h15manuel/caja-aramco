@@ -9,17 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ShiftsRouteImport } from './routes/shifts'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as HistoryRouteImport } from './routes/history'
-import { Route as FleetRouteImport } from './routes/fleet'
 import { Route as IndexRouteImport } from './routes/index'
 
-const ShiftsRoute = ShiftsRouteImport.update({
-  id: '/shifts',
-  path: '/shifts',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -30,11 +23,6 @@ const HistoryRoute = HistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FleetRoute = FleetRouteImport.update({
-  id: '/fleet',
-  path: '/fleet',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,51 +31,36 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/fleet': typeof FleetRoute
   '/history': typeof HistoryRoute
   '/settings': typeof SettingsRoute
-  '/shifts': typeof ShiftsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/fleet': typeof FleetRoute
   '/history': typeof HistoryRoute
   '/settings': typeof SettingsRoute
-  '/shifts': typeof ShiftsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/fleet': typeof FleetRoute
   '/history': typeof HistoryRoute
   '/settings': typeof SettingsRoute
-  '/shifts': typeof ShiftsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/fleet' | '/history' | '/settings' | '/shifts'
+  fullPaths: '/' | '/history' | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/fleet' | '/history' | '/settings' | '/shifts'
-  id: '__root__' | '/' | '/fleet' | '/history' | '/settings' | '/shifts'
+  to: '/' | '/history' | '/settings'
+  id: '__root__' | '/' | '/history' | '/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  FleetRoute: typeof FleetRoute
   HistoryRoute: typeof HistoryRoute
   SettingsRoute: typeof SettingsRoute
-  ShiftsRoute: typeof ShiftsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/shifts': {
-      id: '/shifts'
-      path: '/shifts'
-      fullPath: '/shifts'
-      preLoaderRoute: typeof ShiftsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -102,13 +75,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/fleet': {
-      id: '/fleet'
-      path: '/fleet'
-      fullPath: '/fleet'
-      preLoaderRoute: typeof FleetRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -121,10 +87,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  FleetRoute: FleetRoute,
   HistoryRoute: HistoryRoute,
   SettingsRoute: SettingsRoute,
-  ShiftsRoute: ShiftsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
