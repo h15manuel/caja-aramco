@@ -78,6 +78,7 @@ export interface Cashbox {
   tipsTotal: number;
   cashDrawer: number;
   entries: CashEntry[];
+  active?: boolean; // true = persona en turno
 }
 
 export interface AppState {
