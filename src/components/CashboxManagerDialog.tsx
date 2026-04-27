@@ -9,7 +9,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useApp } from '@/contexts/AppContext';
+import { formatCLP } from '@/lib/format';
 
 export function CashboxManagerDialog() {
   const {
@@ -19,6 +21,7 @@ export function CashboxManagerDialog() {
     addCashbox,
     renameCashbox,
     removeCashbox,
+    toggleCashboxActive,
   } = useApp();
 
   const [open, setOpen] = useState(false);
@@ -51,13 +54,16 @@ export function CashboxManagerDialog() {
     setOpen(false);
   };
 
+  const activeBoxes = cashboxes.filter(b => b.active ?? true);
+  const totalCashChica = activeBoxes.reduce((sum, b) => sum + b.cashDrawer, 0);
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
           className="p-2.5 rounded-full bg-secondary text-muted-foreground hover:text-foreground transition-all"
-          title="Gestionar cajas"
-          aria-label="Gestionar cajas"
+          title="Gestionar personas en turno"
+          aria-label="Gestionar personas en turno"
         >
           <Users className="w-5 h-5" />
         </button>
@@ -65,12 +71,21 @@ export function CashboxManagerDialog() {
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Cajas</DialogTitle>
+          <DialogTitle>Personas en turno</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-2 mt-2">
+        {/* Total caja chica de personas activas */}
+        <div className="mt-2 p-3 rounded-2xl bg-primary/10 border border-primary/30">
+          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            Total Caja Chica · {activeBoxes.length} en turno
+          </p>
+          <p className="text-2xl font-bold text-primary mt-0.5">{formatCLP(totalCashChica)}</p>
+        </div>
+
+        <div className="space-y-2 mt-3">
           {cashboxes.map(box => {
-            const isActive = box.id === activeCashbox.id;
+            const isActiveSelected = box.id === activeCashbox.id;
+            const isOnShift = box.active ?? true;
             const isEditing = editingId === box.id;
             const confirmDelete = confirmDeleteId === box.id;
 
@@ -78,10 +93,10 @@ export function CashboxManagerDialog() {
               <div
                 key={box.id}
                 className={`flex items-center gap-2 p-3 rounded-2xl border transition-all ${
-                  isActive
+                  isActiveSelected
                     ? 'bg-primary/10 border-primary/40'
                     : 'bg-card border-border'
-                }`}
+                } ${!isOnShift ? 'opacity-60' : ''}`}
               >
                 {isEditing ? (
                   <>
@@ -118,19 +133,24 @@ export function CashboxManagerDialog() {
                   </>
                 ) : (
                   <>
+                    <Checkbox
+                      checked={isOnShift}
+                      onCheckedChange={() => toggleCashboxActive(box.id)}
+                      aria-label={`Marcar ${box.name} en turno`}
+                    />
                     <button
                       onClick={() => handleSelect(box.id)}
-                      className="flex-1 text-left"
+                      className="flex-1 text-left min-w-0"
                     >
                       <p
-                        className={`text-sm font-semibold ${
-                          isActive ? 'text-primary' : 'text-foreground'
+                        className={`text-sm font-semibold truncate ${
+                          isActiveSelected ? 'text-primary' : 'text-foreground'
                         }`}
                       >
                         {box.name}
                       </p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {box.entries.length} movimientos · Z {box.zAmount.toLocaleString('es-CL')}
+                        Caja chica: {formatCLP(box.cashDrawer)}
                       </p>
                     </button>
                     {confirmDelete ? (
@@ -181,7 +201,7 @@ export function CashboxManagerDialog() {
 
         <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
           <Input
-            placeholder="Nombre de la persona / caja"
+            placeholder="Nombre de la persona"
             value={newName}
             onChange={e => setNewName(e.target.value)}
             onKeyDown={e => {
