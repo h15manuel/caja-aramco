@@ -1,26 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { LayoutDashboard, Clock, Search, CalendarDays, Settings } from 'lucide-react';
+import { LayoutDashboard, Clock, Settings } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
-import { useShiftNotifications } from '@/hooks/useShiftNotifications';
 import { CashboxManagerDialog } from '@/components/CashboxManagerDialog';
 
 const tabs = [
   { path: '/', icon: LayoutDashboard, label: 'Caja' },
   { path: '/history', icon: Clock, label: 'Historial' },
-  { path: '/fleet', icon: Search, label: 'Flota' },
-  { path: '/shifts', icon: CalendarDays, label: 'Turnos' },
   { path: '/settings', icon: Settings, label: 'Ajustes' },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { state, activeCashbox } = useApp();
-  useShiftNotifications(state);
+  const { activeCashbox } = useApp();
 
   const [zoom, setZoom] = useState(1);
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    setMounted(true);
     const saved = localStorage.getItem('uiZoom');
     if (saved) setZoom(parseInt(saved) / 100);
     const handler = () => {
@@ -28,7 +26,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       if (saved) setZoom(parseInt(saved) / 100);
     };
     window.addEventListener('storage', handler);
-    // Poll for same-tab changes
     const interval = setInterval(() => {
       const val = parseFloat(document.documentElement.style.getPropertyValue('--ui-zoom') || '1');
       setZoom(val);
@@ -44,7 +41,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <header className="flex items-center justify-between px-5 pt-4 pb-2 gap-3">
         <div className="flex items-baseline gap-2 min-w-0">
           <h1 className="text-lg font-bold text-foreground tracking-tight shrink-0">Control de Caja</h1>
-          {onCajaPage && (
+          {onCajaPage && mounted && (
             <span className="text-sm font-medium text-primary truncate">· {activeCashbox.name}</span>
           )}
         </div>
