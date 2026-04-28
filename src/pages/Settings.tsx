@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings as SettingsIcon, Palette, Moon, Sun, Check, Download, Upload, Bell, ZoomIn } from 'lucide-react';
+import { Settings as SettingsIcon, Palette, Image as ImageIcon, Check, Download, Upload, Bell, ZoomIn, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { AppState, defaultAppState } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useWallpaper, themePresets } from '@/hooks/useWallpaper';
 
 function hexToHSL(hex: string): { h: number; s: number; l: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -33,7 +34,9 @@ const presetColors = ['#1abc9c', '#3498db', '#9b59b6', '#e74c3c', '#f39c12', '#2
 
 export default function SettingsPage() {
   const { state, setState } = useApp();
+  const { config: wallpaper, update: updateWallpaper } = useWallpaper();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const wallpaperInputRef = useRef<HTMLInputElement>(null);
   const [isDark, setIsDark] = useState(() =>
     typeof document !== 'undefined' ? !document.documentElement.classList.contains('light') : true,
   );
@@ -122,17 +125,147 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-4 pt-2 max-w-lg mx-auto">
-      {/* Theme toggle */}
-      <div className="m3-surface-elevated p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {isDark ? <Moon className="w-5 h-5 text-primary" /> : <Sun className="w-5 h-5 text-primary" />}
-            <div>
-              <p className="text-sm font-medium text-foreground">Modo Oscuro</p>
-              <p className="text-xs text-muted-foreground">{isDark ? 'Activado' : 'Desactivado'}</p>
-            </div>
+      {/* Theme presets */}
+      <div className="m3-surface-elevated p-5 space-y-4">
+        <div className="flex items-center gap-3">
+          <Palette className="w-5 h-5 text-primary" />
+          <p className="text-sm font-medium text-foreground">Tema</p>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Elige un tema. Los colores de fondo y de las fuentes se ajustan automáticamente para mantener buena legibilidad.
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {themePresets.map(preset => {
+            const selected = wallpaper.themeId === preset.id;
+            return (
+              <button
+                key={preset.id}
+                onClick={() => {
+                  updateWallpaper({ themeId: preset.id });
+                  setIsDark(preset.isDark);
+                }}
+                className={`relative rounded-2xl p-3 border-2 transition-all text-left ${
+                  selected ? 'border-primary' : 'border-border hover:border-primary/50'
+                }`}
+                style={{
+                  backgroundColor: `hsl(${preset.background})`,
+                  color: `hsl(${preset.foreground})`,
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">{preset.name}</span>
+                  {selected && <Check className="w-4 h-4" style={{ color: `hsl(${preset.primary})` }} />}
+                </div>
+                <div className="flex gap-1 mt-2">
+                  <span className="w-4 h-4 rounded-full" style={{ backgroundColor: `hsl(${preset.primary})` }} />
+                  <span className="w-4 h-4 rounded-full" style={{ backgroundColor: `hsl(${preset.card})` }} />
+                  <span className="w-4 h-4 rounded-full" style={{ backgroundColor: `hsl(${preset.muted})` }} />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Wallpaper */}
+      <div className="m3-surface-elevated p-5 space-y-4">
+        <div className="flex items-center gap-3">
+          <ImageIcon className="w-5 h-5 text-primary" />
+          <p className="text-sm font-medium text-foreground">Fondo de Pantalla</p>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Sube una imagen personalizada. Queda fija detrás de la app, encuadrada y con la opacidad/desenfoque que elijas para que no estorbe.
+        </p>
+
+        {wallpaper.imageData ? (
+          <div className="relative rounded-2xl overflow-hidden border border-border">
+            <img src={wallpaper.imageData} alt="Fondo" className="w-full h-32 object-cover" />
+            <button
+              onClick={() => updateWallpaper({ imageData: null })}
+              className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1.5 shadow-lg"
+              aria-label="Quitar fondo"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-          <Switch checked={isDark} onCheckedChange={setIsDark} />
+        ) : (
+          <Button
+            variant="outline"
+            onClick={() => wallpaperInputRef.current?.click()}
+            className="w-full rounded-2xl gap-2 bg-secondary/50 border-border border-dashed h-20"
+          >
+            <Upload className="w-4 h-4 text-primary" />
+            <span className="text-sm">Subir imagen</span>
+          </Button>
+        )}
+        <input
+          ref={wallpaperInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={e => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            if (file.size > 4 * 1024 * 1024) {
+              toast.error('La imagen no puede superar 4MB');
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = ev => {
+              const data = ev.target?.result as string;
+              updateWallpaper({ imageData: data });
+              toast.success('Fondo aplicado');
+            };
+            reader.readAsDataURL(file);
+            if (wallpaperInputRef.current) wallpaperInputRef.current.value = '';
+          }}
+        />
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Visibilidad de la imagen</Label>
+            <span className="text-xs text-foreground">{wallpaper.imageOpacity}%</span>
+          </div>
+          <Slider
+            value={[wallpaper.imageOpacity]}
+            onValueChange={v => updateWallpaper({ imageOpacity: v[0] })}
+            min={0}
+            max={100}
+            step={5}
+            disabled={!wallpaper.imageData}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Desenfoque</Label>
+            <span className="text-xs text-foreground">{wallpaper.imageBlur}px</span>
+          </div>
+          <Slider
+            value={[wallpaper.imageBlur]}
+            onValueChange={v => updateWallpaper({ imageBlur: v[0] })}
+            min={0}
+            max={20}
+            step={1}
+            disabled={!wallpaper.imageData}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Opacidad de tarjetas</Label>
+            <span className="text-xs text-foreground">{wallpaper.surfaceAlpha}%</span>
+          </div>
+          <Slider
+            value={[wallpaper.surfaceAlpha]}
+            onValueChange={v => updateWallpaper({ surfaceAlpha: v[0] })}
+            min={40}
+            max={100}
+            step={5}
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Más bajo = se ve más el fondo a través de las tarjetas.
+          </p>
         </div>
       </div>
 
