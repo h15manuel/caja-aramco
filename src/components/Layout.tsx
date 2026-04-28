@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from '@tanstack/react-router';
 import { LayoutDashboard, Clock, Settings } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { CashboxManagerDialog } from '@/components/CashboxManagerDialog';
+import { useWallpaper } from '@/hooks/useWallpaper';
 
 const tabs = [
   { path: '/', icon: LayoutDashboard, label: 'Caja' },
@@ -14,6 +15,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { activeCashbox } = useApp();
+  useWallpaper();
 
   const [zoom, setZoom] = useState(1);
   const [mounted, setMounted] = useState(false);
