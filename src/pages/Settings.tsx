@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings as SettingsIcon, Palette, Moon, Sun, Check, Download, Upload, Bell, ZoomIn } from 'lucide-react';
+import { Settings as SettingsIcon, Palette, Image as ImageIcon, Check, Download, Upload, Bell, ZoomIn, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { AppState, defaultAppState } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useWallpaper, themePresets } from '@/hooks/useWallpaper';
 
 function hexToHSL(hex: string): { h: number; s: number; l: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -33,7 +34,9 @@ const presetColors = ['#1abc9c', '#3498db', '#9b59b6', '#e74c3c', '#f39c12', '#2
 
 export default function SettingsPage() {
   const { state, setState } = useApp();
+  const { config: wallpaper, update: updateWallpaper } = useWallpaper();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const wallpaperInputRef = useRef<HTMLInputElement>(null);
   const [isDark, setIsDark] = useState(() =>
     typeof document !== 'undefined' ? !document.documentElement.classList.contains('light') : true,
   );
