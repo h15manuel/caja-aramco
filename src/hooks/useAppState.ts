@@ -172,21 +172,22 @@ export function useAppState() {
         cashboxName: box.name,
       };
 
-      const freshId = crypto.randomUUID();
+      // Conservamos la primera caja (la principal) con su nombre actual,
+      // pero reseteamos sus valores. Las demás cajas se eliminan al cerrar el turno.
+      const principal = s.cashboxes[0];
+      const resetPrincipal: Cashbox = {
+        id: principal.id,
+        name: principal.name,
+        zAmount: 0,
+        tipsTotal: 0,
+        cashDrawer: 0,
+        entries: [],
+        active: true,
+      };
       return {
         ...s,
-        cashboxes: [
-          {
-            id: freshId,
-            name: 'Caja 1',
-            zAmount: 0,
-            tipsTotal: 0,
-            cashDrawer: 0,
-            entries: [],
-            active: true,
-          },
-        ],
-        activeCashboxId: freshId,
+        cashboxes: [resetPrincipal],
+        activeCashboxId: resetPrincipal.id,
         shiftHistory: [...s.shiftHistory, record],
       };
     });
