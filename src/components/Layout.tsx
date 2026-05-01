@@ -37,7 +37,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const onCajaPage = location.pathname === '/';
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-transparent flex flex-col">
       {/* Top bar */}
       <header className="flex items-center justify-between px-5 pt-4 pb-2 gap-3">
         <div className="flex items-baseline gap-2 min-w-0">
