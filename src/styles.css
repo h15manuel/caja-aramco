@@ -161,12 +161,16 @@
   * {
     border-color: hsl(var(--border));
   }
-  body {
+  html {
     background-color: hsl(var(--background));
+  }
+  body {
+    background-color: transparent;
     color: hsl(var(--foreground));
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     position: relative;
+    min-height: 100vh;
   }
   /* Wallpaper layer fixed behind everything */
   body::before {
