@@ -129,12 +129,6 @@
   --sidebar-ring: 172 70% 44%;
 
   --shield-blur: 0px;
-
-  /* Wallpaper / theme overlay */
-  --surface-alpha: 1;
-  --bg-image-url: none;
-  --bg-image-opacity: 0;
-  --bg-image-blur: 0px;
 }
 
 .light {
