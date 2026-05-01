@@ -129,12 +129,6 @@
   --sidebar-ring: 172 70% 44%;
 
   --shield-blur: 0px;
-
-  /* Wallpaper / theme overlay */
-  --surface-alpha: 1;
-  --bg-image-url: none;
-  --bg-image-opacity: 0;
-  --bg-image-blur: 0px;
 }
 
 .light {
@@ -161,34 +155,11 @@
   * {
     border-color: hsl(var(--border));
   }
-  html {
-    background-color: hsl(var(--background));
-  }
   body {
-    background-color: transparent;
+    background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
-    position: relative;
-    min-height: 100vh;
-  }
-  /* Wallpaper layer fixed behind everything */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background-image: var(--bg-image-url);
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: var(--bg-image-opacity);
-    filter: blur(var(--bg-image-blur));
-    pointer-events: none;
-    z-index: 0;
-  }
-  body > * {
-    position: relative;
-    z-index: 1;
   }
 }
 
@@ -198,16 +169,12 @@
     transition: filter 0.3s ease;
   }
   .m3-surface {
-    background-color: hsl(var(--card) / var(--surface-alpha));
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background-color: hsl(var(--card));
     border-radius: 2rem;
     border: 1px solid hsl(var(--border));
   }
   .m3-surface-elevated {
-    background-color: hsl(var(--card) / var(--surface-alpha));
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background-color: hsl(var(--card));
     border-radius: 2rem;
     border: 1px solid hsl(var(--border));
     box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.2);
