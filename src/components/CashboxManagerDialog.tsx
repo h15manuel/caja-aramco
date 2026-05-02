@@ -24,6 +24,7 @@ export function CashboxManagerDialog() {
     removeCashbox,
     toggleCashboxActive,
   } = useApp();
+  const { config: syncConfig, remoteUsers } = useSyncCtx();
 
   const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState('');
