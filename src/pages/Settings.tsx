@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { AppState, defaultAppState } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SyncSettings } from '@/components/SyncSettings';
 
 function hexToHSL(hex: string): { h: number; s: number; l: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -247,6 +248,11 @@ export default function SettingsPage() {
             />
           </div>
         )}
+      </div>
+
+      {/* Sincronización entre cajas */}
+      <div className="m3-surface-elevated p-5">
+        <SyncSettings />
       </div>
 
       {/* Backup */}
