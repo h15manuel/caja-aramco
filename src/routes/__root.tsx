@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/contexts/AppContext";
+import { SyncProvider } from "@/contexts/SyncContext";
 import Layout from "@/components/Layout";
 
 import appCss from "../styles.css?url";
@@ -59,9 +60,11 @@ function RootComponent() {
       <TooltipProvider>
         <Sonner />
         <AppProvider>
-          <Layout>
-            <Outlet />
-          </Layout>
+          <SyncProvider>
+            <Layout>
+              <Outlet />
+            </Layout>
+          </SyncProvider>
         </AppProvider>
       </TooltipProvider>
     </QueryClientProvider>
