@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Plus, Pencil, Trash2, Check, X } from 'lucide-react';
+import { Users, Plus, Pencil, Trash2, Check, X, Wifi, WifiOff } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useApp } from '@/contexts/AppContext';
+import { useSyncCtx } from '@/contexts/SyncContext';
 import { formatCLP } from '@/lib/format';
 
 export function CashboxManagerDialog() {
@@ -23,6 +24,7 @@ export function CashboxManagerDialog() {
     removeCashbox,
     toggleCashboxActive,
   } = useApp();
+  const { config: syncConfig, remoteUsers } = useSyncCtx();
 
   const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState('');
@@ -198,6 +200,57 @@ export function CashboxManagerDialog() {
             );
           })}
         </div>
+
+        {/* Personas conectadas vía Apps Script (datos externos / online) */}
+        {syncConfig.role !== 'idle' && (
+          <div className="mt-4 pt-3 border-t border-border space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Sincronizado · turno {syncConfig.code}
+              </p>
+              <span className="text-[10px] text-muted-foreground">
+                {remoteUsers.filter(u => u.online).length}/{remoteUsers.length} online
+              </span>
+            </div>
+            {remoteUsers.length === 0 && (
+              <p className="text-xs text-muted-foreground italic">Sin datos remotos aún…</p>
+            )}
+            {remoteUsers.map(u => {
+              const isMe = u.username === syncConfig.username;
+              return (
+                <div
+                  key={u.username}
+                  className="flex items-center justify-between p-2.5 rounded-2xl bg-card border border-border"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    {isMe ? (
+                      <span title="Datos locales (este dispositivo)">
+                        <WifiOff className="w-4 h-4 text-muted-foreground/60" />
+                      </span>
+                    ) : (
+                      <span title={u.online ? 'Online — datos externos' : 'Offline'}>
+                        <Wifi className={`w-4 h-4 ${u.online ? 'text-green-500' : 'text-muted-foreground/40'}`} />
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">
+                        {u.username}
+                        {u.isHost && <span className="ml-1.5 text-[9px] uppercase text-primary">host</span>}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {isMe ? 'Local' : (u.online ? 'Online' : 'Offline')}
+                        {' · '}Caja chica: {formatCLP(u.totals.cashDrawer)}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {formatCLP(u.totals.efectivoReal)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
           <Input
