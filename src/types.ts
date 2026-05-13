@@ -2,6 +2,7 @@ export enum EntryType {
   DEPOSIT = 'DEPOSIT',
   TIP = 'TIP',
   CREDIT = 'CREDIT',
+  COUPON = 'COUPON',
 }
 
 export interface CashEntry {
@@ -12,6 +13,12 @@ export interface CashEntry {
   company?: string;
   observation?: string;
   cashCredit?: boolean; // crédito en efectivo – se resta de la meta
+  /**
+   * Si está definido y es != id de la caja origen, el crédito en efectivo
+   * se "envía" a esa caja: se suma en sus créditos y NO se resta de la meta
+   * de la caja de origen (aparece como crédito normal en el origen).
+   */
+  targetCashboxId?: string;
   denominations?: number; // depósito: denominación única usada (e.g. 20000)
   date: string; // ISO string
   time: string; // HH:mm
