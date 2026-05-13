@@ -35,7 +35,7 @@ function usePersistOpen(key: string, defaultValue = true) {
   return [open, toggle] as const;
 }
 
-function CreditSubgroup({ group, gi, onEdit }: { group: CashEntry[]; gi: number; onEdit: (e: CashEntry) => void }) {
+function CreditSubgroup({ group, gi, onEdit, cashboxNames }: { group: CashEntry[]; gi: number; onEdit: (e: CashEntry) => void; cashboxNames: Map<string, string> }) {
   const [open, setOpen] = usePersistOpen(`col-cred-g${gi}`, true);
   const subtotal = group.reduce((sum, e) => sum + e.amount, 0);
   return (
@@ -61,7 +61,12 @@ function CreditSubgroup({ group, gi, onEdit }: { group: CashEntry[]; gi: number;
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-foreground truncate">
                   {entry.company || 'Crédito'}
-                  {entry.cashCredit && <span className="ml-1 text-[9px] text-warning font-semibold">(Efectivo)</span>}
+                  {entry.cashCredit && !entry.targetCashboxId && <span className="ml-1 text-[9px] text-warning font-semibold">(Efectivo)</span>}
+                  {entry.cashCredit && entry.targetCashboxId && (
+                    <span className="ml-1 text-[9px] text-purple-500 font-semibold">
+                      → {cashboxNames.get(entry.targetCashboxId) || 'Otra caja'}
+                    </span>
+                  )}
                 </p>
                 <p className="text-[10px] text-muted-foreground">{entry.time}</p>
               </div>
