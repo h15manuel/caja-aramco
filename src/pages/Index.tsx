@@ -5,7 +5,8 @@ import { EntryType, CashEntry, formatDenominations } from '@/types';
 import QuickCountModal from '@/components/QuickCountModal';
 import EntryDialog from '@/components/EntryDialog';
 import EditEntryDialog from '@/components/EditEntryDialog';
-import { ArrowDownCircle, CreditCard, Banknote, TrendingUp, TrendingDown, CheckCircle2, Target, LogOut, ChevronDown } from 'lucide-react';
+import { ArrowDownCircle, CreditCard, Banknote, TrendingUp, TrendingDown, CheckCircle2, Target, LogOut, ChevronDown, Ticket } from 'lucide-react';
+import CouponDialog from '@/components/CouponDialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   AlertDialog,
@@ -222,9 +223,9 @@ export default function Dashboard() {
                   .filter(e => e.type === EntryType.DEPOSIT)
                   .forEach((e, i) => depositOrder.set(e.id, i + 1));
                 return todayEntries.filter(e => e.type !== EntryType.CREDIT).map(entry => {
-                  const icons = { DEPOSIT: ArrowDownCircle, TIP: Banknote, CREDIT: CreditCard };
-                  const colors = { DEPOSIT: 'text-primary', TIP: 'text-warning', CREDIT: 'text-info' };
-                  const labels = { DEPOSIT: 'Depósito', TIP: 'Propina', CREDIT: 'Crédito' };
+                  const icons: Record<string, typeof ArrowDownCircle> = { DEPOSIT: ArrowDownCircle, TIP: Banknote, CREDIT: CreditCard, COUPON: Ticket };
+                  const colors: Record<string, string> = { DEPOSIT: 'text-primary', TIP: 'text-warning', CREDIT: 'text-info', COUPON: 'text-purple-500' };
+                  const labels: Record<string, string> = { DEPOSIT: 'Depósito', TIP: 'Propina', CREDIT: 'Crédito', COUPON: 'Cupón' };
                   const Icon = icons[entry.type];
                   const depNum = entry.type === EntryType.DEPOSIT ? depositOrder.get(entry.id) : undefined;
                   return (
