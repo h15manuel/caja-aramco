@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { formatCLP } from '@/lib/format';
 import { EntryType, ShiftRecord, CashEntry, formatDenominations } from '@/types';
-import { ArrowDownCircle, CreditCard, Banknote, ChevronDown, ChevronUp, Clock, Share2, Search, FileDown, History as HistoryIcon } from 'lucide-react';
+import { ArrowDownCircle, CreditCard, Banknote, ChevronDown, ChevronUp, Clock, Share2, Search, FileDown, History as HistoryIcon, Ticket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
@@ -13,9 +13,9 @@ export default function History() {
   const [expandedShift, setExpandedShift] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
-  const icons = { DEPOSIT: ArrowDownCircle, TIP: Banknote, CREDIT: CreditCard };
-  const colors = { DEPOSIT: 'text-primary', TIP: 'text-warning', CREDIT: 'text-info' };
-  const labels: Record<string, string> = { DEPOSIT: 'Depósito', TIP: 'Propina', CREDIT: 'Crédito' };
+  const icons: Record<string, React.ComponentType<{ className?: string }>> = { DEPOSIT: ArrowDownCircle, TIP: Banknote, CREDIT: CreditCard, COUPON: Ticket };
+  const colors: Record<string, string> = { DEPOSIT: 'text-primary', TIP: 'text-warning', CREDIT: 'text-info', COUPON: 'text-purple-500' };
+  const labels: Record<string, string> = { DEPOSIT: 'Depósito', TIP: 'Propina', CREDIT: 'Crédito', COUPON: 'Cupón' };
   const statusLabels = { cuadrada: 'CUADRADA', sobrante: 'SOBRANTE', faltante: 'FALTANTE' };
   const statusColors = { cuadrada: 'text-green-500', sobrante: 'text-blue-500', faltante: 'text-destructive' };
 

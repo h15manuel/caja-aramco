@@ -5,7 +5,8 @@ import { EntryType, CashEntry, formatDenominations } from '@/types';
 import QuickCountModal from '@/components/QuickCountModal';
 import EntryDialog from '@/components/EntryDialog';
 import EditEntryDialog from '@/components/EditEntryDialog';
-import { ArrowDownCircle, CreditCard, Banknote, TrendingUp, TrendingDown, CheckCircle2, Target, LogOut, ChevronDown } from 'lucide-react';
+import { ArrowDownCircle, CreditCard, Banknote, TrendingUp, TrendingDown, CheckCircle2, Target, LogOut, ChevronDown, Ticket } from 'lucide-react';
+import CouponDialog from '@/components/CouponDialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   AlertDialog,
@@ -34,7 +35,7 @@ function usePersistOpen(key: string, defaultValue = true) {
   return [open, toggle] as const;
 }
 
-function CreditSubgroup({ group, gi, onEdit }: { group: CashEntry[]; gi: number; onEdit: (e: CashEntry) => void }) {
+function CreditSubgroup({ group, gi, onEdit, cashboxNames }: { group: CashEntry[]; gi: number; onEdit: (e: CashEntry) => void; cashboxNames: Map<string, string> }) {
   const [open, setOpen] = usePersistOpen(`col-cred-g${gi}`, true);
   const subtotal = group.reduce((sum, e) => sum + e.amount, 0);
   return (
@@ -60,7 +61,12 @@ function CreditSubgroup({ group, gi, onEdit }: { group: CashEntry[]; gi: number;
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-foreground truncate">
                   {entry.company || 'Crédito'}
-                  {entry.cashCredit && <span className="ml-1 text-[9px] text-warning font-semibold">(Efectivo)</span>}
+                  {entry.cashCredit && !entry.targetCashboxId && <span className="ml-1 text-[9px] text-warning font-semibold">(Efectivo)</span>}
+                  {entry.cashCredit && entry.targetCashboxId && (
+                    <span className="ml-1 text-[9px] text-purple-500 font-semibold">
+                      → {cashboxNames.get(entry.targetCashboxId) || 'Otra caja'}
+                    </span>
+                  )}
                 </p>
                 <p className="text-[10px] text-muted-foreground">{entry.time}</p>
               </div>
@@ -74,7 +80,8 @@ function CreditSubgroup({ group, gi, onEdit }: { group: CashEntry[]; gi: number;
 }
 
 export default function Dashboard() {
-  const { state, setZAmount, closeShift, depositsTotal, cashCreditTotal, meta, efectivoReal, diferencia, status, activeCashbox } = useApp();
+  const { state, setZAmount, closeShift, depositsTotal, cashCreditTotal, couponTotal, incomingCashCreditTotal, meta, efectivoReal, diferencia, status, activeCashbox, cashboxes } = useApp();
+  const cashboxNames = React.useMemo(() => new Map(cashboxes.map(b => [b.id, b.name])), [cashboxes]);
   const [zInput, setZInput] = useState(state.zAmount > 0 ? state.zAmount.toString() : '');
 
   // Resync local Z input when the active cashbox changes
@@ -134,12 +141,12 @@ export default function Dashboard() {
         <div className="m3-surface p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Meta</p>
           <p className="text-xl font-bold text-foreground shield-blur mt-1">{formatCLP(meta)}</p>
-          <p className="text-[9px] text-muted-foreground leading-tight">Z - Propinas - Créd. Efect.</p>
+          <p className="text-[9px] text-muted-foreground leading-tight">Z - Propinas - Créd. - Cup.</p>
         </div>
         <div className="m3-surface p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Dinero</p>
-          <p className="text-xl font-bold text-foreground shield-blur mt-1">{formatCLP(depositsTotal + state.cashDrawer + cashCreditTotal)}</p>
-          <p className="text-[9px] text-muted-foreground leading-tight">Avances + Caja Chica + Créditos</p>
+          <p className="text-xl font-bold text-foreground shield-blur mt-1">{formatCLP(depositsTotal + state.cashDrawer + cashCreditTotal + couponTotal)}</p>
+          <p className="text-[9px] text-muted-foreground leading-tight">Avances + C. Chica + Créd. + Cup.</p>
         </div>
         <div className="m3-surface p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Avances</p>
@@ -149,9 +156,16 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Propinas</p>
           <p className="text-xl font-bold text-warning shield-blur mt-1">{formatCLP(state.tipsTotal)}</p>
         </div>
-        <div className="m3-surface p-3 col-span-2 text-center">
+        <div className="m3-surface p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Créditos</p>
           <p className="text-xl font-bold text-info shield-blur mt-1">{formatCLP(cashCreditTotal)}</p>
+          <p className="text-[9px] text-muted-foreground leading-tight">
+            {incomingCashCreditTotal > 0 ? `Incl. ${formatCLP(incomingCashCreditTotal)} recibido` : 'Se descuenta de la Meta'}
+          </p>
+        </div>
+        <div className="m3-surface p-3 text-center">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cupones</p>
+          <p className="text-xl font-bold text-purple-500 shield-blur mt-1">{formatCLP(couponTotal)}</p>
           <p className="text-[9px] text-muted-foreground leading-tight">Se descuenta de la Meta</p>
         </div>
       </div>
@@ -176,6 +190,7 @@ export default function Dashboard() {
             <span className="text-xs font-medium text-foreground">Crédito</span>
           </button>
         </EntryDialog>
+        <CouponDialog />
       </div>
 
       {/* Close shift button - compacto */}
@@ -222,9 +237,9 @@ export default function Dashboard() {
                   .filter(e => e.type === EntryType.DEPOSIT)
                   .forEach((e, i) => depositOrder.set(e.id, i + 1));
                 return todayEntries.filter(e => e.type !== EntryType.CREDIT).map(entry => {
-                  const icons = { DEPOSIT: ArrowDownCircle, TIP: Banknote, CREDIT: CreditCard };
-                  const colors = { DEPOSIT: 'text-primary', TIP: 'text-warning', CREDIT: 'text-info' };
-                  const labels = { DEPOSIT: 'Depósito', TIP: 'Propina', CREDIT: 'Crédito' };
+                  const icons: Record<string, typeof ArrowDownCircle> = { DEPOSIT: ArrowDownCircle, TIP: Banknote, CREDIT: CreditCard, COUPON: Ticket };
+                  const colors: Record<string, string> = { DEPOSIT: 'text-primary', TIP: 'text-warning', CREDIT: 'text-info', COUPON: 'text-purple-500' };
+                  const labels: Record<string, string> = { DEPOSIT: 'Depósito', TIP: 'Propina', CREDIT: 'Crédito', COUPON: 'Cupón' };
                   const Icon = icons[entry.type];
                   const depNum = entry.type === EntryType.DEPOSIT ? depositOrder.get(entry.id) : undefined;
                   return (
@@ -280,7 +295,7 @@ export default function Dashboard() {
             <CollapsibleContent>
               <div className="px-3 pb-3 space-y-3">
                 {groups.map((group, gi) => (
-                  <CreditSubgroup key={gi} group={group} gi={gi} onEdit={setEditingEntry} />
+                  <CreditSubgroup key={gi} group={group} gi={gi} onEdit={setEditingEntry} cashboxNames={cashboxNames} />
                 ))}
               </div>
               <p className="text-[10px] text-muted-foreground px-3 pb-2 italic">Los créditos no afectan el saldo de caja</p>
