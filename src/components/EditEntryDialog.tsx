@@ -7,8 +7,11 @@ import { Switch } from '@/components/ui/switch';
 import { CashEntry, EntryType } from '@/types';
 import { useApp } from '@/contexts/AppContext';
 import { formatCLP, parseCLPInput } from '@/lib/format';
-import { ArrowDownCircle, CreditCard, Banknote, Save } from 'lucide-react';
+import { ArrowDownCircle, CreditCard, Banknote, Save, Ticket } from 'lucide-react';
 import DenominationPicker from './DenominationPicker';
+
+const icons: Record<string, typeof ArrowDownCircle> = { DEPOSIT: ArrowDownCircle, TIP: Banknote, CREDIT: CreditCard, COUPON: Ticket };
+const labels: Record<string, string> = { DEPOSIT: 'Depósito', TIP: 'Propina', CREDIT: 'Crédito', COUPON: 'Cupón' };
 
 const icons = { DEPOSIT: ArrowDownCircle, TIP: Banknote, CREDIT: CreditCard };
 const labels = { DEPOSIT: 'Depósito', TIP: 'Propina', CREDIT: 'Crédito' };
