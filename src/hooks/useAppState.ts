@@ -142,10 +142,19 @@ export function useAppState() {
       const depTotal = box.entries
         .filter(e => e.type === 'DEPOSIT')
         .reduce((sum, e) => sum + e.amount, 0);
-      const cashCreditTot = box.entries
-        .filter(e => e.type === 'CREDIT' && e.cashCredit)
+      const ownCashCredit = box.entries
+        .filter(e => e.type === 'CREDIT' && e.cashCredit && !e.targetCashboxId)
         .reduce((sum, e) => sum + e.amount, 0);
-      const m = box.zAmount - box.tipsTotal - cashCreditTot;
+      const incomingCashCredit = s.cashboxes
+        .filter(b => b.id !== box.id)
+        .flatMap(b => b.entries)
+        .filter(e => e.type === 'CREDIT' && e.cashCredit && e.targetCashboxId === box.id)
+        .reduce((sum, e) => sum + e.amount, 0);
+      const couponTot = box.entries
+        .filter(e => e.type === 'COUPON')
+        .reduce((sum, e) => sum + e.amount, 0);
+      const cashCreditTot = ownCashCredit + incomingCashCredit;
+      const m = box.zAmount - box.tipsTotal - cashCreditTot - couponTot;
       const real = depTotal + box.cashDrawer;
       const diff = real - m;
       const st = diff === 0 ? 'cuadrada' : diff > 0 ? 'sobrante' : 'faltante';
