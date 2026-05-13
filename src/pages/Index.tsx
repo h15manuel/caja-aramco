@@ -75,7 +75,7 @@ function CreditSubgroup({ group, gi, onEdit }: { group: CashEntry[]; gi: number;
 }
 
 export default function Dashboard() {
-  const { state, setZAmount, closeShift, depositsTotal, cashCreditTotal, meta, efectivoReal, diferencia, status, activeCashbox } = useApp();
+  const { state, setZAmount, closeShift, depositsTotal, cashCreditTotal, couponTotal, incomingCashCreditTotal, meta, efectivoReal, diferencia, status, activeCashbox } = useApp();
   const [zInput, setZInput] = useState(state.zAmount > 0 ? state.zAmount.toString() : '');
 
   // Resync local Z input when the active cashbox changes
