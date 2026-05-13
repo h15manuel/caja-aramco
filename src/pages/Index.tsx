@@ -135,12 +135,12 @@ export default function Dashboard() {
         <div className="m3-surface p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Meta</p>
           <p className="text-xl font-bold text-foreground shield-blur mt-1">{formatCLP(meta)}</p>
-          <p className="text-[9px] text-muted-foreground leading-tight">Z - Propinas - Créd. Efect.</p>
+          <p className="text-[9px] text-muted-foreground leading-tight">Z - Propinas - Créd. - Cup.</p>
         </div>
         <div className="m3-surface p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Dinero</p>
-          <p className="text-xl font-bold text-foreground shield-blur mt-1">{formatCLP(depositsTotal + state.cashDrawer + cashCreditTotal)}</p>
-          <p className="text-[9px] text-muted-foreground leading-tight">Avances + Caja Chica + Créditos</p>
+          <p className="text-xl font-bold text-foreground shield-blur mt-1">{formatCLP(depositsTotal + state.cashDrawer + cashCreditTotal + couponTotal)}</p>
+          <p className="text-[9px] text-muted-foreground leading-tight">Avances + C. Chica + Créd. + Cup.</p>
         </div>
         <div className="m3-surface p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Avances</p>
@@ -150,9 +150,16 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Propinas</p>
           <p className="text-xl font-bold text-warning shield-blur mt-1">{formatCLP(state.tipsTotal)}</p>
         </div>
-        <div className="m3-surface p-3 col-span-2 text-center">
+        <div className="m3-surface p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Créditos</p>
           <p className="text-xl font-bold text-info shield-blur mt-1">{formatCLP(cashCreditTotal)}</p>
+          <p className="text-[9px] text-muted-foreground leading-tight">
+            {incomingCashCreditTotal > 0 ? `Incl. ${formatCLP(incomingCashCreditTotal)} recibido` : 'Se descuenta de la Meta'}
+          </p>
+        </div>
+        <div className="m3-surface p-3 text-center">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cupones</p>
+          <p className="text-xl font-bold text-purple-500 shield-blur mt-1">{formatCLP(couponTotal)}</p>
           <p className="text-[9px] text-muted-foreground leading-tight">Se descuenta de la Meta</p>
         </div>
       </div>
@@ -177,6 +184,7 @@ export default function Dashboard() {
             <span className="text-xs font-medium text-foreground">Crédito</span>
           </button>
         </EntryDialog>
+        <CouponDialog />
       </div>
 
       {/* Close shift button - compacto */}
