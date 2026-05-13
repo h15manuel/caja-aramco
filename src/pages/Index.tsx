@@ -295,7 +295,7 @@ export default function Dashboard() {
             <CollapsibleContent>
               <div className="px-3 pb-3 space-y-3">
                 {groups.map((group, gi) => (
-                  <CreditSubgroup key={gi} group={group} gi={gi} onEdit={setEditingEntry} />
+                  <CreditSubgroup key={gi} group={group} gi={gi} onEdit={setEditingEntry} cashboxNames={cashboxNames} />
                 ))}
               </div>
               <p className="text-[10px] text-muted-foreground px-3 pb-2 italic">Los créditos no afectan el saldo de caja</p>
