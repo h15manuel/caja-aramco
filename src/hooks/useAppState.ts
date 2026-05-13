@@ -259,11 +259,27 @@ export function useAppState() {
     .filter(e => e.type === 'DEPOSIT')
     .reduce((sum, e) => sum + e.amount, 0);
 
-  const cashCreditTotal = activeBox.entries
-    .filter(e => e.type === 'CREDIT' && e.cashCredit)
+  // Créditos en efectivo "propios" (sin destino externo) – sí afectan la meta de esta caja.
+  const ownCashCreditTotal = activeBox.entries
+    .filter(e => e.type === 'CREDIT' && e.cashCredit && !e.targetCashboxId)
     .reduce((sum, e) => sum + e.amount, 0);
 
-  const meta = activeBox.zAmount - activeBox.tipsTotal - cashCreditTotal;
+  // Créditos en efectivo recibidos desde OTRAS cajas (apuntando a esta).
+  const incomingCashCreditTotal = persisted.cashboxes
+    .filter(b => b.id !== activeBox.id)
+    .flatMap(b => b.entries)
+    .filter(e => e.type === 'CREDIT' && e.cashCredit && e.targetCashboxId === activeBox.id)
+    .reduce((sum, e) => sum + e.amount, 0);
+
+  // Total de créditos en efectivo que SUMA esta persona en su cuenta.
+  const cashCreditTotal = ownCashCreditTotal + incomingCashCreditTotal;
+
+  // Cupones de esta caja – descuentan meta y suman en totalidad.
+  const couponTotal = activeBox.entries
+    .filter(e => e.type === 'COUPON')
+    .reduce((sum, e) => sum + e.amount, 0);
+
+  const meta = activeBox.zAmount - activeBox.tipsTotal - cashCreditTotal - couponTotal;
   const efectivoReal = depositsTotal + activeBox.cashDrawer;
   const diferencia = efectivoReal - meta;
 
@@ -282,6 +298,8 @@ export function useAppState() {
     deleteEntry,
     depositsTotal,
     cashCreditTotal,
+    couponTotal,
+    incomingCashCreditTotal,
     meta,
     efectivoReal,
     diferencia,
