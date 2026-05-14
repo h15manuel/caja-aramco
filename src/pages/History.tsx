@@ -219,8 +219,37 @@ export default function History() {
       </div>
 
       {filtered.length > 0 ? (
-        <div className="space-y-2">
-          {filtered.map(shift => {
+        <div className="space-y-5">
+          {monthlyGroups.map(group => (
+            <div key={group.key} className="space-y-2">
+              <div className="m3-surface-elevated p-3 rounded-2xl">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-bold text-foreground capitalize">{group.label}</p>
+                  <span className="text-[10px] text-muted-foreground">{group.shifts.length} turnos</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-secondary/50 rounded-xl p-2 text-center">
+                    <p className="text-[9px] text-muted-foreground uppercase">Sobrante</p>
+                    <p className="text-sm font-bold text-blue-500 shield-blur">{formatCLP(group.sobrante)}</p>
+                  </div>
+                  <div className="bg-secondary/50 rounded-xl p-2 text-center">
+                    <p className="text-[9px] text-muted-foreground uppercase">Faltante</p>
+                    <p className="text-sm font-bold text-destructive shield-blur">{formatCLP(group.faltante)}</p>
+                  </div>
+                  <div className="bg-secondary/50 rounded-xl p-2 text-center">
+                    <p className="text-[9px] text-muted-foreground uppercase">Neto</p>
+                    <p className={`text-sm font-bold shield-blur ${group.neto >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                      {group.neto >= 0 ? '+' : '-'}{formatCLP(Math.abs(group.neto))}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {group.shifts.map(shift => {
+            const isExpanded = expandedShift === shift.id;
+            const closedDate = new Date(shift.closedAt);
+            const m = computeMetrics(shift);
+            const nonCredit = shift.entries.filter(e => e.type !== EntryType.CREDIT);
+            return (
             const isExpanded = expandedShift === shift.id;
             const closedDate = new Date(shift.closedAt);
             const m = computeMetrics(shift);
