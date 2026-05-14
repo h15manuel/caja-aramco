@@ -58,6 +58,27 @@ export default function History() {
     });
   }, [allShifts, search, metricsById]);
 
+  // Group filtered shifts by month (YYYY-MM) and compute monthly totals
+  const monthlyGroups = useMemo(() => {
+    const groups = new Map<string, { label: string; shifts: ShiftRecord[]; sobrante: number; faltante: number; neto: number; cuadradas: number }>();
+    for (const shift of filtered) {
+      const d = new Date(shift.closedAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = format(d, "MMMM yyyy", { locale: es });
+      let g = groups.get(key);
+      if (!g) {
+        g = { label, shifts: [], sobrante: 0, faltante: 0, neto: 0, cuadradas: 0 };
+        groups.set(key, g);
+      }
+      g.shifts.push(shift);
+      if (shift.status === 'sobrante') g.sobrante += Math.abs(shift.diferencia);
+      else if (shift.status === 'faltante') g.faltante += Math.abs(shift.diferencia);
+      else g.cuadradas += 1;
+      g.neto += shift.diferencia;
+    }
+    return Array.from(groups.entries()).map(([key, g]) => ({ key, ...g }));
+  }, [filtered]);
+
   const computeMetrics = (shift: ShiftRecord) => {
     const cached = metricsById.get(shift.id);
     if (cached) return cached;
@@ -198,8 +219,32 @@ export default function History() {
       </div>
 
       {filtered.length > 0 ? (
-        <div className="space-y-2">
-          {filtered.map(shift => {
+        <div className="space-y-5">
+          {monthlyGroups.map(group => (
+            <div key={group.key} className="space-y-2">
+              <div className="m3-surface-elevated p-3 rounded-2xl">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-bold text-foreground capitalize">{group.label}</p>
+                  <span className="text-[10px] text-muted-foreground">{group.shifts.length} turnos</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-secondary/50 rounded-xl p-2 text-center">
+                    <p className="text-[9px] text-muted-foreground uppercase">Sobrante</p>
+                    <p className="text-sm font-bold text-blue-500 shield-blur">{formatCLP(group.sobrante)}</p>
+                  </div>
+                  <div className="bg-secondary/50 rounded-xl p-2 text-center">
+                    <p className="text-[9px] text-muted-foreground uppercase">Faltante</p>
+                    <p className="text-sm font-bold text-destructive shield-blur">{formatCLP(group.faltante)}</p>
+                  </div>
+                  <div className="bg-secondary/50 rounded-xl p-2 text-center">
+                    <p className="text-[9px] text-muted-foreground uppercase">Neto</p>
+                    <p className={`text-sm font-bold shield-blur ${group.neto >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                      {group.neto >= 0 ? '+' : '-'}{formatCLP(Math.abs(group.neto))}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {group.shifts.map(shift => {
             const isExpanded = expandedShift === shift.id;
             const closedDate = new Date(shift.closedAt);
             const m = computeMetrics(shift);
@@ -327,6 +372,8 @@ export default function History() {
               </div>
             );
           })}
+            </div>
+          ))}
         </div>
       ) : (
         <div className="text-center py-12 text-muted-foreground">
