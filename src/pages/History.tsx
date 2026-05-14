@@ -250,11 +250,6 @@ export default function History() {
             const m = computeMetrics(shift);
             const nonCredit = shift.entries.filter(e => e.type !== EntryType.CREDIT);
             return (
-            const isExpanded = expandedShift === shift.id;
-            const closedDate = new Date(shift.closedAt);
-            const m = computeMetrics(shift);
-            const nonCredit = shift.entries.filter(e => e.type !== EntryType.CREDIT);
-            return (
               <div key={shift.id} className="m3-surface overflow-hidden animate-slide-up">
                 <button
                   onClick={() => setExpandedShift(isExpanded ? null : shift.id)}
