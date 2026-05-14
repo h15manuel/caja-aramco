@@ -58,6 +58,27 @@ export default function History() {
     });
   }, [allShifts, search, metricsById]);
 
+  // Group filtered shifts by month (YYYY-MM) and compute monthly totals
+  const monthlyGroups = useMemo(() => {
+    const groups = new Map<string, { label: string; shifts: ShiftRecord[]; sobrante: number; faltante: number; neto: number; cuadradas: number }>();
+    for (const shift of filtered) {
+      const d = new Date(shift.closedAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = format(d, "MMMM yyyy", { locale: es });
+      let g = groups.get(key);
+      if (!g) {
+        g = { label, shifts: [], sobrante: 0, faltante: 0, neto: 0, cuadradas: 0 };
+        groups.set(key, g);
+      }
+      g.shifts.push(shift);
+      if (shift.status === 'sobrante') g.sobrante += Math.abs(shift.diferencia);
+      else if (shift.status === 'faltante') g.faltante += Math.abs(shift.diferencia);
+      else g.cuadradas += 1;
+      g.neto += shift.diferencia;
+    }
+    return Array.from(groups.entries()).map(([key, g]) => ({ key, ...g }));
+  }, [filtered]);
+
   const computeMetrics = (shift: ShiftRecord) => {
     const cached = metricsById.get(shift.id);
     if (cached) return cached;
