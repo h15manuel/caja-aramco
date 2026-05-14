@@ -8,7 +8,11 @@ import { formatCLP, parseCLPInput, generateId } from '@/lib/format';
 import { EntryType } from '@/types';
 import { Ticket, Plus } from 'lucide-react';
 
-export default function CouponDialog() {
+interface CouponDialogProps {
+  children?: React.ReactNode;
+}
+
+export default function CouponDialog({ children }: CouponDialogProps) {
   const { addEntry, state } = useApp();
   const [open, setOpen] = useState(false);
   const [amountStr, setAmountStr] = useState('');
