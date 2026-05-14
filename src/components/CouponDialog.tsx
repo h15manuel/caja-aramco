@@ -42,13 +42,15 @@ export default function CouponDialog({ children }: CouponDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setAmountStr(''); setObservation(''); } }}>
       <DialogTrigger asChild>
-        <button className="flex-1 min-w-[80px] m3-surface p-2.5 flex flex-col items-center gap-1 hover:border-primary/40 transition-colors cursor-pointer">
-          <Ticket className="w-5 h-5 text-purple-500" />
-          <span className="text-xs font-medium text-foreground">Cupones</span>
-          {couponTotal > 0 && (
-            <span className="text-[9px] text-muted-foreground shield-blur">{formatCLP(couponTotal)}</span>
-          )}
-        </button>
+        {children ?? (
+          <button className="flex-1 min-w-[80px] m3-surface p-2.5 flex flex-col items-center gap-1 hover:border-primary/40 transition-colors cursor-pointer">
+            <Ticket className="w-5 h-5 text-purple-500" />
+            <span className="text-xs font-medium text-foreground">Cupones</span>
+            {couponTotal > 0 && (
+              <span className="text-[9px] text-muted-foreground shield-blur">{formatCLP(couponTotal)}</span>
+            )}
+          </button>
+        )}
       </DialogTrigger>
       <DialogContent className="rounded-3xl bg-card border-border max-w-sm mx-auto">
         <DialogHeader>
