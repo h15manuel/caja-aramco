@@ -163,11 +163,13 @@ export default function Dashboard() {
             {incomingCashCreditTotal > 0 ? `Incl. ${formatCLP(incomingCashCreditTotal)} recibido` : 'Se descuenta de la Meta'}
           </p>
         </div>
-        <div className="m3-surface p-3 text-center">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cupones</p>
-          <p className="text-xl font-bold text-purple-500 shield-blur mt-1">{formatCLP(couponTotal)}</p>
-          <p className="text-[9px] text-muted-foreground leading-tight">Se descuenta de la Meta</p>
-        </div>
+        <CouponDialog>
+          <button type="button" className="m3-surface p-3 text-center w-full hover:border-primary/40 transition-colors cursor-pointer">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cupones</p>
+            <p className="text-xl font-bold text-purple-500 shield-blur mt-1">{formatCLP(couponTotal)}</p>
+            <p className="text-[9px] text-muted-foreground leading-tight">Toca para registrar · resta de Meta</p>
+          </button>
+        </CouponDialog>
       </div>
 
       {/* Quick actions - compacto */}
