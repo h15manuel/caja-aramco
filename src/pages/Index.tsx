@@ -192,7 +192,6 @@ export default function Dashboard() {
             <span className="text-xs font-medium text-foreground">Crédito</span>
           </button>
         </EntryDialog>
-        <CouponDialog />
       </div>
 
       {/* Close shift button - compacto */}
