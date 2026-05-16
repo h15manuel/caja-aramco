@@ -147,7 +147,7 @@ export function SyncSettings() {
                       )}
                     </span>
                     <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                      {formatCLP(u.totals.efectivoReal)}
+                      {formatCLP(u.totals.totalDinero)}
                     </span>
                   </li>
                 );
