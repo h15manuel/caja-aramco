@@ -14,7 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      shift_users: {
+        Row: {
+          is_host: boolean
+          last_seen: string
+          shift_code: string
+          totals: Json
+          username: string
+        }
+        Insert: {
+          is_host?: boolean
+          last_seen?: string
+          shift_code: string
+          totals?: Json
+          username: string
+        }
+        Update: {
+          is_host?: boolean
+          last_seen?: string
+          shift_code?: string
+          totals?: Json
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_users_shift_code_fkey"
+            columns: ["shift_code"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      shifts: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          host_username: string
+          shift_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string
+          host_username: string
+          shift_id?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          host_username?: string
+          shift_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
