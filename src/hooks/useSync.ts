@@ -144,6 +144,8 @@ export function useSync() {
         last_seen: new Date().toISOString(),
       });
 
+      // El host (caja principal) pasa a llamarse como el usuario
+      if (app.cashboxes[0]) app.renameCashbox(app.cashboxes[0].id, config.username);
       update({ role: 'host', code, shiftId, hostUsername: config.username });
       return code;
     } catch (e) {
