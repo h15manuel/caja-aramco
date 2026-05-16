@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
+import { useSyncCtx } from '@/contexts/SyncContext';
 import { formatCLP, parseCLPInput } from '@/lib/format';
 import { EntryType, CashEntry, formatDenominations } from '@/types';
 import QuickCountModal from '@/components/QuickCountModal';
@@ -61,10 +62,15 @@ function CreditSubgroup({ group, gi, onEdit, cashboxNames }: { group: CashEntry[
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-foreground truncate">
                   {entry.company || 'Crédito'}
-                  {entry.cashCredit && !entry.targetCashboxId && <span className="ml-1 text-[9px] text-warning font-semibold">(Efectivo)</span>}
+                  {entry.cashCredit && !entry.targetCashboxId && !entry.targetUsername && <span className="ml-1 text-[9px] text-warning font-semibold">(Efectivo)</span>}
                   {entry.cashCredit && entry.targetCashboxId && (
                     <span className="ml-1 text-[9px] text-purple-500 font-semibold">
                       → {cashboxNames.get(entry.targetCashboxId) || 'Otra caja'}
+                    </span>
+                  )}
+                  {entry.cashCredit && entry.targetUsername && (
+                    <span className="ml-1 text-[9px] text-purple-500 font-semibold">
+                      → {entry.targetUsername} <span className="text-[8px] uppercase text-primary">online</span>
                     </span>
                   )}
                 </p>
@@ -80,7 +86,16 @@ function CreditSubgroup({ group, gi, onEdit, cashboxNames }: { group: CashEntry[
 }
 
 export default function Dashboard() {
-  const { state, setZAmount, closeShift, depositsTotal, cashCreditTotal, couponTotal, incomingCashCreditTotal, meta, efectivoReal, diferencia, status, activeCashbox, cashboxes } = useApp();
+  const app = useApp();
+  const { state, setZAmount, closeShift, depositsTotal, couponTotal, incomingCashCreditTotal, efectivoReal, activeCashbox, cashboxes } = app;
+  const { remoteIncomingCashCreditTotal } = useSyncCtx();
+  // Combina créditos en efectivo locales + los que me asignaron remotos online.
+  const cashCreditTotal = app.cashCreditTotal + remoteIncomingCashCreditTotal;
+  const totalIncomingCashCredit = incomingCashCreditTotal + remoteIncomingCashCreditTotal;
+  const meta = state.zAmount - state.tipsTotal - cashCreditTotal - couponTotal;
+  const diferencia = efectivoReal - meta;
+  const status: 'cuadrada' | 'sobrante' | 'faltante' =
+    diferencia === 0 ? 'cuadrada' : diferencia > 0 ? 'sobrante' : 'faltante';
   const cashboxNames = React.useMemo(() => new Map(cashboxes.map(b => [b.id, b.name])), [cashboxes]);
   const [zInput, setZInput] = useState(state.zAmount > 0 ? state.zAmount.toString() : '');
 
@@ -160,7 +175,7 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Créditos</p>
           <p className="text-xl font-bold text-info shield-blur mt-1">{formatCLP(cashCreditTotal)}</p>
           <p className="text-[9px] text-muted-foreground leading-tight">
-            {incomingCashCreditTotal > 0 ? `Incl. ${formatCLP(incomingCashCreditTotal)} recibido` : 'Se descuenta de la Meta'}
+            {totalIncomingCashCredit > 0 ? `Incl. ${formatCLP(totalIncomingCashCredit)} recibido` : 'Se descuenta de la Meta'}
           </p>
         </div>
         <CouponDialog>

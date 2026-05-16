@@ -270,15 +270,25 @@ export function useAppState() {
 
   // Créditos en efectivo "propios" (sin destino externo) – sí afectan la meta de esta caja.
   const ownCashCreditTotal = activeBox.entries
-    .filter(e => e.type === 'CREDIT' && e.cashCredit && !e.targetCashboxId)
+    .filter(e => e.type === 'CREDIT' && e.cashCredit && !e.targetCashboxId && !e.targetUsername)
     .reduce((sum, e) => sum + e.amount, 0);
 
-  // Créditos en efectivo recibidos desde OTRAS cajas (apuntando a esta).
+  // Créditos en efectivo recibidos desde OTRAS cajas locales (apuntando a esta).
   const incomingCashCreditTotal = persisted.cashboxes
     .filter(b => b.id !== activeBox.id)
     .flatMap(b => b.entries)
     .filter(e => e.type === 'CREDIT' && e.cashCredit && e.targetCashboxId === activeBox.id)
     .reduce((sum, e) => sum + e.amount, 0);
+
+  // Créditos en efectivo que SALEN de esta caja hacia usuarios remotos (sincronizados).
+  // Mapa { usernameNormalizado: monto total }.
+  const outgoingCashCreditsByUser: Record<string, number> = {};
+  for (const e of activeBox.entries) {
+    if (e.type === 'CREDIT' && e.cashCredit && e.targetUsername) {
+      const k = e.targetUsername.trim().toLowerCase();
+      outgoingCashCreditsByUser[k] = (outgoingCashCreditsByUser[k] ?? 0) + e.amount;
+    }
+  }
 
   // Total de créditos en efectivo que SUMA esta persona en su cuenta.
   const cashCreditTotal = ownCashCreditTotal + incomingCashCreditTotal;
@@ -309,6 +319,7 @@ export function useAppState() {
     cashCreditTotal,
     couponTotal,
     incomingCashCreditTotal,
+    outgoingCashCreditsByUser,
     meta,
     efectivoReal,
     diferencia,

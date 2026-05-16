@@ -17,6 +17,8 @@ export interface SyncTotals {
   efectivoReal: number;
   diferencia: number;
   status: 'cuadrada' | 'sobrante' | 'faltante';
+  /** Map normalizado username -> monto de créditos en efectivo enviados a esa persona */
+  outgoingCashCredits?: Record<string, number>;
 }
 
 export interface RemoteUser {
@@ -81,6 +83,7 @@ const EMPTY_TOTALS: SyncTotals = {
   zAmount: 0, tipsTotal: 0, cashDrawer: 0, depositsTotal: 0,
   cashCreditTotal: 0, couponTotal: 0, totalDinero: 0,
   meta: 0, efectivoReal: 0, diferencia: 0, status: 'cuadrada',
+  outgoingCashCredits: {},
 };
 
 // ---------- hook -----------------------------------------------------------
@@ -231,25 +234,42 @@ export function useSync() {
 
   // ---------------------- totals push ----------------------
 
+  // Créditos en efectivo que OTROS usuarios remotos me asignaron a MÍ.
+  const remoteIncomingCashCreditTotal = useMemo(() => {
+    if (!config.username) return 0;
+    const me = normUser(config.username);
+    return remoteUsers
+      .filter(u => u.online && normUser(u.username) !== me)
+      .reduce((sum, u) => sum + ((u.totals.outgoingCashCredits ?? {})[me] ?? 0), 0);
+  }, [remoteUsers, config.username]);
+
   const localTotals = useMemo<SyncTotals>(() => {
     const cashDrawer = app.state.cashDrawer ?? 0;
+    const cashCreditTotal = app.cashCreditTotal + remoteIncomingCashCreditTotal;
+    const meta = (app.state.zAmount ?? 0) - (app.state.tipsTotal ?? 0)
+      - cashCreditTotal - app.couponTotal;
+    const efectivoReal = app.depositsTotal + cashDrawer;
+    const diferencia = efectivoReal - meta;
+    const status: SyncTotals['status'] =
+      diferencia === 0 ? 'cuadrada' : diferencia > 0 ? 'sobrante' : 'faltante';
     return {
       zAmount: app.state.zAmount ?? 0,
       tipsTotal: app.state.tipsTotal ?? 0,
       cashDrawer,
       depositsTotal: app.depositsTotal,
-      cashCreditTotal: app.cashCreditTotal,
+      cashCreditTotal,
       couponTotal: app.couponTotal,
-      totalDinero: app.depositsTotal + cashDrawer + app.cashCreditTotal + app.couponTotal,
-      meta: app.meta,
-      efectivoReal: app.efectivoReal,
-      diferencia: app.diferencia,
-      status: app.status,
+      totalDinero: app.depositsTotal + cashDrawer + cashCreditTotal + app.couponTotal,
+      meta,
+      efectivoReal,
+      diferencia,
+      status,
+      outgoingCashCredits: app.outgoingCashCreditsByUser,
     };
   }, [
     app.state.zAmount, app.state.tipsTotal, app.state.cashDrawer,
     app.depositsTotal, app.cashCreditTotal, app.couponTotal,
-    app.meta, app.efectivoReal, app.diferencia, app.status,
+    app.outgoingCashCreditsByUser, remoteIncomingCashCreditTotal,
   ]);
 
   const totalsRef = useRef(localTotals);
@@ -341,6 +361,7 @@ export function useSync() {
     joinShift,
     leaveShift,
     remoteUsers,
+    remoteIncomingCashCreditTotal,
     lastError,
     busy,
   };

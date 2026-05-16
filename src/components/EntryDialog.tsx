@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EntryType } from '@/types';
 import { useApp } from '@/contexts/AppContext';
+import { useSyncCtx } from '@/contexts/SyncContext';
 import { formatCLP, parseCLPInput, generateId } from '@/lib/format';
 import { ArrowDownCircle, CreditCard, Banknote, Plus, Ticket, Users } from 'lucide-react';
 import DenominationPicker from './DenominationPicker';
@@ -24,9 +25,11 @@ interface Props {
 }
 
 const NO_TARGET = '__none__';
+const REMOTE_PREFIX = 'remote:';
 
 export default function EntryDialog({ type, children }: Props) {
   const { addEntry, cashboxes, activeCashbox } = useApp();
+  const { config: syncConfig, remoteUsers } = useSyncCtx();
   const [open, setOpen] = useState(false);
   const [amountStr, setAmountStr] = useState('');
   const [company, setCompany] = useState('');
@@ -39,10 +42,16 @@ export default function EntryDialog({ type, children }: Props) {
   const isDeposit = type === EntryType.DEPOSIT;
   const isCredit = type === EntryType.CREDIT;
 
-  // Cajas activas distintas a la actual, candidatas para recibir el crédito en efectivo.
-  const targetCandidates = cashboxes.filter(
+  // Cajas activas distintas a la actual, candidatas locales.
+  const localTargets = cashboxes.filter(
     b => b.id !== activeCashbox.id && (b.active ?? true),
   );
+  // Usuarios remotos online (excluyéndome) – solo si estoy sincronizado.
+  const me = syncConfig.username.trim().toLowerCase();
+  const remoteTargets =
+    syncConfig.role !== 'idle'
+      ? remoteUsers.filter(u => u.online && u.username.toLowerCase() !== me)
+      : [];
 
   const reset = () => {
     setAmountStr('');
@@ -57,6 +66,17 @@ export default function EntryDialog({ type, children }: Props) {
     const amount = parseCLPInput(amountStr);
     if (amount <= 0) return;
 
+    // Resolver destino (local vs remoto)
+    let resolvedTargetCashboxId: string | undefined;
+    let resolvedTargetUsername: string | undefined;
+    if (isCredit && cashCredit && targetCashboxId !== NO_TARGET) {
+      if (targetCashboxId.startsWith(REMOTE_PREFIX)) {
+        resolvedTargetUsername = targetCashboxId.slice(REMOTE_PREFIX.length);
+      } else {
+        resolvedTargetCashboxId = targetCashboxId;
+      }
+    }
+
     const now = new Date();
     addEntry({
       id: generateId(),
@@ -65,8 +85,8 @@ export default function EntryDialog({ type, children }: Props) {
       company: config.needsCompany ? company : undefined,
       observation: !isDeposit && !isCredit && observation ? observation : undefined,
       cashCredit: isCredit ? cashCredit : undefined,
-      targetCashboxId:
-        isCredit && cashCredit && targetCashboxId !== NO_TARGET ? targetCashboxId : undefined,
+      targetCashboxId: resolvedTargetCashboxId,
+      targetUsername: resolvedTargetUsername,
       denominations: isDeposit ? denomination : undefined,
       date: now.toISOString().split('T')[0],
       time: now.toTimeString().slice(0, 5),
@@ -142,9 +162,14 @@ export default function EntryDialog({ type, children }: Props) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={NO_TARGET}>Mantener en mi caja</SelectItem>
-                      {targetCandidates.map(b => (
+                      {localTargets.map(b => (
                         <SelectItem key={b.id} value={b.id}>
                           {b.name}
+                        </SelectItem>
+                      ))}
+                      {remoteTargets.map(u => (
+                        <SelectItem key={`r-${u.username}`} value={`${REMOTE_PREFIX}${u.username.toLowerCase()}`}>
+                          {u.username} <span className="text-[9px] uppercase text-primary ml-1">online</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
