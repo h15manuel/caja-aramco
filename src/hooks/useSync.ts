@@ -152,7 +152,7 @@ export function useSync() {
       setLastError(e instanceof Error ? e.message : String(e));
       return null;
     } finally { setBusy(false); }
-  }, [config.username, update]);
+  }, [config.username, update, app]);
 
   const joinShift = useCallback(async (code: string) => {
     setBusy(true); setLastError('');
