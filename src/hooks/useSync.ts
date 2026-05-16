@@ -181,6 +181,8 @@ export function useSync() {
       });
       if (e2) throw e2;
 
+      // Renombra la caja principal con el usuario sincronizado
+      if (app.cashboxes[0]) app.renameCashbox(app.cashboxes[0].id, config.username);
       update({
         role: shift.host_username === config.username ? 'host' : 'guest',
         code: c,
