@@ -361,6 +361,7 @@ export function useSync() {
     joinShift,
     leaveShift,
     remoteUsers,
+    remoteIncomingCashCreditTotal,
     lastError,
     busy,
   };
