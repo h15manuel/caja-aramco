@@ -135,7 +135,7 @@ export function useSync() {
         shift_code: code,
         username: config.username,
         is_host: true,
-        totals: EMPTY_TOTALS as unknown as Record<string, unknown>,
+        totals: EMPTY_TOTALS as never,
         last_seen: new Date().toISOString(),
       });
 
@@ -169,7 +169,7 @@ export function useSync() {
         shift_code: c,
         username: config.username,
         is_host: shift.host_username === config.username,
-        totals: EMPTY_TOTALS as unknown as Record<string, unknown>,
+        totals: EMPTY_TOTALS as never,
         last_seen: new Date().toISOString(),
       });
       if (e2) throw e2;
@@ -229,7 +229,7 @@ export function useSync() {
         shift_code: config.code,
         username: config.username,
         is_host: config.role === 'host',
-        totals: totalsRef.current as unknown as Record<string, unknown>,
+        totals: totalsRef.current as never,
         last_seen: new Date().toISOString(),
       });
       if (error) throw error;
