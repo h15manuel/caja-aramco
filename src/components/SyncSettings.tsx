@@ -23,6 +23,7 @@ export function SyncSettings() {
 
   const [userDraft, setUserDraft] = useState(config.username);
   const [joinCode, setJoinCode] = useState('');
+  const [viewingUser, setViewingUser] = useState<RemoteUser | null>(null);
 
   const handleRegister = async () => {
     const u = userDraft.trim();
