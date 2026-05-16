@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Users, Plus, Pencil, Trash2, Check, X, Wifi, WifiOff } from 'lucide-react';
+import { Users, Plus, Pencil, Trash2, Check, X, Wifi, WifiOff, Eye, CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -12,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useApp } from '@/contexts/AppContext';
 import { useSyncCtx } from '@/contexts/SyncContext';
+import type { RemoteUser } from '@/hooks/useSync';
 import { formatCLP } from '@/lib/format';
 
 export function CashboxManagerDialog() {
