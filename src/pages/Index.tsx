@@ -62,10 +62,15 @@ function CreditSubgroup({ group, gi, onEdit, cashboxNames }: { group: CashEntry[
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-foreground truncate">
                   {entry.company || 'Crédito'}
-                  {entry.cashCredit && !entry.targetCashboxId && <span className="ml-1 text-[9px] text-warning font-semibold">(Efectivo)</span>}
+                  {entry.cashCredit && !entry.targetCashboxId && !entry.targetUsername && <span className="ml-1 text-[9px] text-warning font-semibold">(Efectivo)</span>}
                   {entry.cashCredit && entry.targetCashboxId && (
                     <span className="ml-1 text-[9px] text-purple-500 font-semibold">
                       → {cashboxNames.get(entry.targetCashboxId) || 'Otra caja'}
+                    </span>
+                  )}
+                  {entry.cashCredit && entry.targetUsername && (
+                    <span className="ml-1 text-[9px] text-purple-500 font-semibold">
+                      → {entry.targetUsername} <span className="text-[8px] uppercase text-primary">online</span>
                     </span>
                   )}
                 </p>
