@@ -141,12 +141,12 @@ export function SyncSettings() {
               {remoteUsers.map(u => {
                 const isMe = u.username === config.username;
                 return (
-                  <li key={u.username} className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-1.5">
+                  <li key={u.username} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="flex items-center gap-1.5 min-w-0 flex-1">
                       <Wifi
-                        className={`w-3.5 h-3.5 ${u.online ? 'text-green-500' : 'text-muted-foreground/40'}`}
+                        className={`w-3.5 h-3.5 shrink-0 ${u.online ? 'text-green-500' : 'text-muted-foreground/40'}`}
                       />
-                      <span className={isMe ? 'font-semibold' : ''}>{u.username}</span>
+                      <span className={`truncate ${isMe ? 'font-semibold' : ''}`}>{u.username}</span>
                       {u.isHost && <span className="text-[9px] uppercase text-primary">host</span>}
                       {isMe && <span className="text-[9px] uppercase text-muted-foreground">(tú)</span>}
                       {!isMe && (
@@ -155,9 +155,20 @@ export function SyncSettings() {
                         </span>
                       )}
                     </span>
-                    <span className="text-xs text-muted-foreground tabular-nums">
+                    <span className="text-xs text-muted-foreground tabular-nums shrink-0">
                       {formatCLP(u.totals.efectivoReal)}
                     </span>
+                    {!isMe && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 shrink-0"
+                        onClick={() => setViewingUser(u)}
+                        title="Ver caja"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
                   </li>
                 );
               })}
