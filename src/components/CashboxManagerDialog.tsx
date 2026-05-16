@@ -59,8 +59,25 @@ export function CashboxManagerDialog() {
     setOpen(false);
   };
 
-  const activeBoxes = cashboxes.filter(b => b.active ?? true);
-  const totalCashChica = activeBoxes.reduce((sum, b) => sum + b.cashDrawer, 0);
+  const isSyncing = syncConfig.role !== 'idle';
+  const isHost = syncConfig.role === 'host';
+  const canManageBoxes = !isSyncing || isHost;
+
+  // Remotos distintos a mí (yo ya estoy representado por cashbox[0])
+  const otherRemote = remoteUsers.filter(
+    u => u.username.toLowerCase() !== syncConfig.username.toLowerCase(),
+  );
+
+  // Cajas locales visibles: si soy guest, solo la principal
+  const visibleLocalBoxes = isSyncing && !isHost ? cashboxes.slice(0, 1) : cashboxes;
+
+  const activeLocalBoxes = visibleLocalBoxes.filter(b => b.active ?? true);
+  const localCashChica = activeLocalBoxes.reduce((sum, b) => sum + b.cashDrawer, 0);
+  const remoteCashChica = otherRemote
+    .filter(u => u.online)
+    .reduce((sum, u) => sum + (u.totals.cashDrawer ?? 0), 0);
+  const totalCashChica = localCashChica + remoteCashChica;
+  const peopleCount = activeLocalBoxes.length + otherRemote.filter(u => u.online).length;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -79,20 +96,22 @@ export function CashboxManagerDialog() {
           <DialogTitle>Personas en turno</DialogTitle>
         </DialogHeader>
 
-        {/* Total caja chica de personas activas */}
+        {/* Total caja chica (locales + remotos online) */}
         <div className="mt-2 p-3 rounded-2xl bg-primary/10 border border-primary/30">
           <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-            Total Caja Chica · {activeBoxes.length} en turno
+            Total Caja Chica · {peopleCount} en turno
           </p>
           <p className="text-2xl font-bold text-primary mt-0.5">{formatCLP(totalCashChica)}</p>
         </div>
 
         <div className="space-y-2 mt-3">
-          {cashboxes.map(box => {
+          {visibleLocalBoxes.map((box, idx) => {
             const isActiveSelected = box.id === activeCashbox.id;
             const isOnShift = box.active ?? true;
             const isEditing = editingId === box.id;
             const confirmDelete = confirmDeleteId === box.id;
+            const isPrincipal = idx === 0;
+            const isMeSynced = isSyncing && isPrincipal;
 
             return (
               <div
@@ -143,6 +162,11 @@ export function CashboxManagerDialog() {
                       onCheckedChange={() => toggleCashboxActive(box.id)}
                       aria-label={`Marcar ${box.name} en turno`}
                     />
+                    {isMeSynced && (
+                      <span title="En línea — esta soy yo">
+                        <Wifi className="w-4 h-4 text-green-500" />
+                      </span>
+                    )}
                     <button
                       onClick={() => handleSelect(box.id)}
                       className="flex-1 text-left min-w-0"
@@ -153,12 +177,17 @@ export function CashboxManagerDialog() {
                         }`}
                       >
                         {box.name}
+                        {isMeSynced && (
+                          <span className="ml-1.5 text-[9px] uppercase text-primary">
+                            {isHost ? 'host · yo' : 'yo'}
+                          </span>
+                        )}
                       </p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
                         Caja chica: {formatCLP(box.cashDrawer)}
                       </p>
                     </button>
-                    {confirmDelete ? (
+                    {canManageBoxes && confirmDelete ? (
                       <>
                         <button
                           onClick={() => {
@@ -178,109 +207,90 @@ export function CashboxManagerDialog() {
                         </button>
                       </>
                     ) : (
-                      <>
-                        <button
-                          onClick={() => startEdit(box.id, box.name)}
-                          className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-foreground"
-                          aria-label="Renombrar"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        {cashboxes.length > 1 && (
+                      canManageBoxes && (
+                        <>
                           <button
-                            onClick={() => setConfirmDeleteId(box.id)}
-                            className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-destructive"
-                            aria-label="Eliminar"
+                            onClick={() => startEdit(box.id, box.name)}
+                            className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-foreground"
+                            aria-label="Renombrar"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Pencil className="w-4 h-4" />
                           </button>
-                        )}
-                      </>
+                          {!isPrincipal && cashboxes.length > 1 && (
+                            <button
+                              onClick={() => setConfirmDeleteId(box.id)}
+                              className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-destructive"
+                              aria-label="Eliminar"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </>
+                      )
                     )}
                   </>
                 )}
               </div>
             );
           })}
+
+          {/* Remotos sincronizados (excluye-me) */}
+          {isSyncing && otherRemote.map(u => (
+            <div
+              key={`remote-${u.username}`}
+              className="flex items-center gap-2 p-3 rounded-2xl bg-card border border-border"
+            >
+              <span title={u.online ? 'Online — datos en tiempo real' : 'Offline'}>
+                {u.online
+                  ? <Wifi className="w-4 h-4 text-green-500" />
+                  : <WifiOff className="w-4 h-4 text-muted-foreground/40" />}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">
+                  {u.username}
+                  {u.isHost && <span className="ml-1.5 text-[9px] uppercase text-primary">host</span>}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {u.online ? 'En línea' : 'Desconectado'} · Caja chica: {formatCLP(u.totals.cashDrawer)}
+                </p>
+              </div>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {formatCLP(u.totals.efectivoReal)}
+              </span>
+              <button
+                onClick={() => setViewingUser(u)}
+                className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-primary"
+                aria-label={`Ver caja de ${u.username}`}
+                title="Ver caja"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
         </div>
 
-        {/* Personas conectadas vía Apps Script (datos externos / online) */}
-        {syncConfig.role !== 'idle' && (
-          <div className="mt-4 pt-3 border-t border-border space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Sincronizado · turno {syncConfig.code}
-              </p>
-              <span className="text-[10px] text-muted-foreground">
-                {remoteUsers.filter(u => u.online).length}/{remoteUsers.length} online
-              </span>
-            </div>
-            {remoteUsers.length === 0 && (
-              <p className="text-xs text-muted-foreground italic">Sin datos remotos aún…</p>
-            )}
-            {remoteUsers.map(u => {
-              const isMe = u.username === syncConfig.username;
-              return (
-                <div
-                  key={u.username}
-                  className="flex items-center justify-between p-2.5 rounded-2xl bg-card border border-border"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    {isMe ? (
-                      <span title="Datos locales (este dispositivo)">
-                        <WifiOff className="w-4 h-4 text-muted-foreground/60" />
-                      </span>
-                    ) : (
-                      <span title={u.online ? 'Online — datos externos' : 'Offline'}>
-                        <Wifi className={`w-4 h-4 ${u.online ? 'text-green-500' : 'text-muted-foreground/40'}`} />
-                      </span>
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold truncate">
-                        {u.username}
-                        {u.isHost && <span className="ml-1.5 text-[9px] uppercase text-primary">host</span>}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {isMe ? 'Local' : (u.online ? 'Online' : 'Offline')}
-                        {' · '}Caja chica: {formatCLP(u.totals.cashDrawer)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      {formatCLP(u.totals.efectivoReal)}
-                    </span>
-                    {!isMe && (
-                      <button
-                        onClick={() => setViewingUser(u)}
-                        className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-primary"
-                        aria-label={`Ver caja de ${u.username}`}
-                        title="Ver caja"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        {isSyncing && (
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-3 text-center">
+            Sincronizado · turno {syncConfig.code} · {remoteUsers.filter(u => u.online).length}/{remoteUsers.length} online
+          </p>
         )}
 
-        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
-          <Input
-            placeholder="Nombre de la persona"
-            value={newName}
-            onChange={e => setNewName(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') handleAdd();
-            }}
-            className="flex-1 h-10"
-          />
-          <Button onClick={handleAdd} disabled={!newName.trim()} size="icon" className="h-10 w-10">
-            <Plus className="w-5 h-5" />
-          </Button>
-        </div>
+        {canManageBoxes && (
+          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
+            <Input
+              placeholder={isHost ? 'Nueva caja offline' : 'Nombre de la persona'}
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleAdd();
+              }}
+              className="flex-1 h-10"
+            />
+            <Button onClick={handleAdd} disabled={!newName.trim()} size="icon" className="h-10 w-10">
+              <Plus className="w-5 h-5" />
+            </Button>
+          </div>
+        )}
       </DialogContent>
 
       <RemoteUserDialog user={viewingUser} onClose={() => setViewingUser(null)} />

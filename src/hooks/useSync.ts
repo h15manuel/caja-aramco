@@ -97,12 +97,18 @@ export function useSync() {
 
   // Mantener la caja principal (cashbox 0) siempre con el nombre del usuario
   // sincronizado mientras haya un turno activo (host o guest).
+  // Además, si soy guest, eliminar cajas locales extra (solo el host puede tener
+  // cajas offline adicionales).
   useEffect(() => {
     if (config.role === 'idle' || !config.username) return;
     const principal = app.cashboxes[0];
     if (!principal) return;
     if (normUser(principal.name) !== normUser(config.username)) {
       app.renameCashbox(principal.id, config.username);
+    }
+    if (config.role === 'guest' && app.cashboxes.length > 1) {
+      // Borrar todas menos la principal (índice 0)
+      app.cashboxes.slice(1).forEach(b => app.removeCashbox(b.id));
     }
   }, [config.role, config.username, app]);
 
