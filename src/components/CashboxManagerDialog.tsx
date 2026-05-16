@@ -73,9 +73,10 @@ export function CashboxManagerDialog() {
 
   const activeLocalBoxes = visibleLocalBoxes.filter(b => b.active ?? true);
   const localCashChica = activeLocalBoxes.reduce((sum, b) => sum + b.cashDrawer, 0);
-  const remoteCashChica = otherRemote
-    .filter(u => u.online)
-    .reduce((sum, u) => sum + (u.totals.cashDrawer ?? 0), 0);
+  // Solo el host puede ver datos financieros de los demás
+  const remoteCashChica = isHost
+    ? otherRemote.filter(u => u.online).reduce((sum, u) => sum + (u.totals.cashDrawer ?? 0), 0)
+    : 0;
   const totalCashChica = localCashChica + remoteCashChica;
   const peopleCount = activeLocalBoxes.length + otherRemote.filter(u => u.online).length;
 
@@ -251,20 +252,25 @@ export function CashboxManagerDialog() {
                   {u.isHost && <span className="ml-1.5 text-[9px] uppercase text-primary">host</span>}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {u.online ? 'En línea' : 'Desconectado'} · Caja chica: {formatCLP(u.totals.cashDrawer)}
+                  {u.online ? 'En línea' : 'Desconectado'}
+                  {isHost && <> · Caja chica: {formatCLP(u.totals.cashDrawer)}</>}
                 </p>
               </div>
-              <span className="text-xs text-muted-foreground tabular-nums">
-                {formatCLP(u.totals.efectivoReal)}
-              </span>
-              <button
-                onClick={() => setViewingUser(u)}
-                className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-primary"
-                aria-label={`Ver caja de ${u.username}`}
-                title="Ver caja"
-              >
-                <Eye className="w-4 h-4" />
-              </button>
+              {isHost && (
+                <>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {formatCLP(u.totals.efectivoReal)}
+                  </span>
+                  <button
+                    onClick={() => setViewingUser(u)}
+                    className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-primary"
+                    aria-label={`Ver caja de ${u.username}`}
+                    title="Ver caja"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                </>
+              )}
             </div>
           ))}
         </div>
