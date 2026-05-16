@@ -43,7 +43,14 @@ function doGet(e) {
 function doPost(e) {
   let body = {};
   try {
-    if (e.postData && e.postData.contents) body = JSON.parse(e.postData.contents);
+    // Preferido: cliente envía application/x-www-form-urlencoded con
+    // payload=<json> (evita preflight y problemas de redirect CORS).
+    if (e.parameter && e.parameter.payload) {
+      body = JSON.parse(e.parameter.payload);
+    } else if (e.postData && e.postData.contents) {
+      // Fallback: body JSON crudo (text/plain o application/json)
+      body = JSON.parse(e.postData.contents);
+    }
   } catch (err) {
     return json_({ ok: false, error: 'invalid_json' });
   }

@@ -73,16 +73,33 @@ async function callScript<T = unknown>(
   body: Record<string, unknown>,
 ): Promise<T> {
   if (!url) throw new Error('URL de Apps Script no configurada');
-  // text/plain evita el preflight CORS; Apps Script igual recibe el body
-  // crudo en e.postData.contents y lo parseamos como JSON ahí.
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(body),
-    redirect: 'follow',
-  });
+  // Apps Script redirige POST cross-origin a googleusercontent.com.
+  // Usamos x-www-form-urlencoded (request "simple" de CORS) con el payload
+  // serializado como JSON. El backend lo parsea desde e.parameter.payload.
+  const form = new URLSearchParams();
+  form.set('payload', JSON.stringify(body));
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body: form.toString(),
+      redirect: 'follow',
+    });
+  } catch (e) {
+    throw new Error(
+      'No se pudo conectar con Apps Script. Verifica que la implementación esté como ' +
+      '"Aplicación web" con acceso "Cualquier persona" (no "Cualquier persona con cuenta de Google").'
+    );
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = (await res.json()) as { ok?: boolean; error?: string } & Record<string, unknown>;
+  const text = await res.text();
+  let data: { ok?: boolean; error?: string } & Record<string, unknown>;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error('Respuesta no-JSON de Apps Script (¿URL incorrecta o sin /exec?)');
+  }
   if (!data.ok) throw new Error(String(data.error || 'error'));
   return data as T;
 }
