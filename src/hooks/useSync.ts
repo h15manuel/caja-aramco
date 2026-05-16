@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
+import { supabase } from '@/integrations/supabase/client';
 
 // ---------- types ----------------------------------------------------------
 
@@ -25,16 +26,16 @@ export interface RemoteUser {
 export type SyncRole = 'idle' | 'host' | 'guest';
 
 export interface SyncConfig {
-  scriptUrl: string;
   username: string;
   role: SyncRole;
-  code: string;        // código del turno activo
-  shiftId: string;     // id del turno
+  code: string;
+  shiftId: string;
   hostUsername: string;
+  // legacy fields kept so old localStorage doesn't break
+  scriptUrl?: string;
 }
 
 const DEFAULT_CONFIG: SyncConfig = {
-  scriptUrl: '',
   username: '',
   role: 'idle',
   code: '',
@@ -43,8 +44,8 @@ const DEFAULT_CONFIG: SyncConfig = {
 };
 
 const STORAGE_KEY = 'caja-control-sync';
-const PUSH_INTERVAL_MS = 8000;
-const PULL_INTERVAL_MS = 8000;
+const PUSH_INTERVAL_MS = 10000;
+const ONLINE_WINDOW_MS = 30000;
 
 // ---------- helpers --------------------------------------------------------
 
@@ -68,41 +69,14 @@ function normUser(u: string) {
   return u.trim().toLowerCase();
 }
 
-async function callScript<T = unknown>(
-  url: string,
-  body: Record<string, unknown>,
-): Promise<T> {
-  if (!url) throw new Error('URL de Apps Script no configurada');
-  // Apps Script redirige POST cross-origin a googleusercontent.com.
-  // Usamos x-www-form-urlencoded (request "simple" de CORS) con el payload
-  // serializado como JSON. El backend lo parsea desde e.parameter.payload.
-  const form = new URLSearchParams();
-  form.set('payload', JSON.stringify(body));
-  let res: Response;
-  try {
-    res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-      body: form.toString(),
-      redirect: 'follow',
-    });
-  } catch (e) {
-    throw new Error(
-      'No se pudo conectar con Apps Script. Verifica que la implementación esté como ' +
-      '"Aplicación web" con acceso "Cualquier persona" (no "Cualquier persona con cuenta de Google").'
-    );
-  }
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const text = await res.text();
-  let data: { ok?: boolean; error?: string } & Record<string, unknown>;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    throw new Error('Respuesta no-JSON de Apps Script (¿URL incorrecta o sin /exec?)');
-  }
-  if (!data.ok) throw new Error(String(data.error || 'error'));
-  return data as T;
+function genCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
+
+const EMPTY_TOTALS: SyncTotals = {
+  zAmount: 0, tipsTotal: 0, cashDrawer: 0, depositsTotal: 0,
+  meta: 0, efectivoReal: 0, diferencia: 0, status: 'cuadrada',
+};
 
 // ---------- hook -----------------------------------------------------------
 
@@ -114,7 +88,6 @@ export function useSync() {
 
   const app = useApp();
 
-  // Persist config
   useEffect(() => { saveConfig(config); }, [config]);
 
   const update = useCallback((patch: Partial<SyncConfig>) => {
@@ -128,30 +101,51 @@ export function useSync() {
     try {
       const u = normUser(username);
       if (!u) throw new Error('Nombre vacío');
-      await callScript(config.scriptUrl, { action: 'registerUser', username: u });
       update({ username: u });
       return true;
     } catch (e) {
       setLastError(e instanceof Error ? e.message : String(e));
       return false;
     } finally { setBusy(false); }
-  }, [config.scriptUrl, update]);
+  }, [update]);
 
   const openShift = useCallback(async () => {
     setBusy(true); setLastError('');
     try {
       if (!config.username) throw new Error('Define tu nombre de usuario primero');
-      const r = await callScript<{ code: string; shiftId: string }>(
-        config.scriptUrl,
-        { action: 'openShift', username: config.username },
-      );
-      update({ role: 'host', code: r.code, shiftId: r.shiftId, hostUsername: config.username });
-      return r.code;
+      // Try a few codes in case of (very unlikely) collision
+      let code = '';
+      let shiftId = '';
+      for (let i = 0; i < 5; i++) {
+        const candidate = genCode();
+        const { data, error } = await supabase
+          .from('shifts')
+          .insert({ code: candidate, host_username: config.username })
+          .select('code, shift_id')
+          .single();
+        if (!error && data) { code = data.code; shiftId = data.shift_id; break; }
+        if (error && !String(error.message).toLowerCase().includes('duplicate')) {
+          throw error;
+        }
+      }
+      if (!code) throw new Error('No se pudo generar un código único');
+
+      // Register self as host in shift_users
+      await supabase.from('shift_users').upsert({
+        shift_code: code,
+        username: config.username,
+        is_host: true,
+        totals: EMPTY_TOTALS,
+        last_seen: new Date().toISOString(),
+      });
+
+      update({ role: 'host', code, shiftId, hostUsername: config.username });
+      return code;
     } catch (e) {
       setLastError(e instanceof Error ? e.message : String(e));
       return null;
     } finally { setBusy(false); }
-  }, [config.scriptUrl, config.username, update]);
+  }, [config.username, update]);
 
   const joinShift = useCallback(async (code: string) => {
     setBusy(true); setLastError('');
@@ -159,37 +153,58 @@ export function useSync() {
       if (!config.username) throw new Error('Define tu nombre de usuario primero');
       const c = code.trim();
       if (!/^\d{6}$/.test(c)) throw new Error('El código debe tener 6 dígitos');
-      const r = await callScript<{ shiftId: string; hostUsername: string }>(
-        config.scriptUrl,
-        { action: 'joinShift', username: config.username, code: c },
-      );
-      update({ role: 'guest', code: c, shiftId: r.shiftId, hostUsername: r.hostUsername });
+
+      const { data: shift, error: e1 } = await supabase
+        .from('shifts')
+        .select('code, host_username, shift_id, expires_at')
+        .eq('code', c)
+        .maybeSingle();
+      if (e1) throw e1;
+      if (!shift) throw new Error('Código no encontrado');
+      if (new Date(shift.expires_at).getTime() < Date.now()) {
+        throw new Error('Este turno expiró');
+      }
+
+      const { error: e2 } = await supabase.from('shift_users').upsert({
+        shift_code: c,
+        username: config.username,
+        is_host: shift.host_username === config.username,
+        totals: EMPTY_TOTALS,
+        last_seen: new Date().toISOString(),
+      });
+      if (e2) throw e2;
+
+      update({
+        role: shift.host_username === config.username ? 'host' : 'guest',
+        code: c,
+        shiftId: shift.shift_id,
+        hostUsername: shift.host_username,
+      });
       return true;
     } catch (e) {
       setLastError(e instanceof Error ? e.message : String(e));
       return false;
     } finally { setBusy(false); }
-  }, [config.scriptUrl, config.username, update]);
+  }, [config.username, update]);
 
   const leaveShift = useCallback(async () => {
-    setBusy(true); setLastError('');
+    setBusy(true);
     try {
       if (config.code && config.username) {
-        await callScript(config.scriptUrl, {
-          action: 'leaveShift',
-          username: config.username,
-          code: config.code,
-        }).catch(() => undefined);
+        await supabase
+          .from('shift_users')
+          .delete()
+          .eq('shift_code', config.code)
+          .eq('username', config.username);
       }
       update({ role: 'idle', code: '', shiftId: '', hostUsername: '' });
       setRemoteUsers([]);
       return true;
     } finally { setBusy(false); }
-  }, [config.scriptUrl, config.code, config.username, update]);
+  }, [config.code, config.username, update]);
 
-  // ---------------------- push / pull loop ----------------------
+  // ---------------------- totals push ----------------------
 
-  // Construir totales locales actuales
   const localTotals = useMemo<SyncTotals>(() => ({
     zAmount: app.state.zAmount ?? 0,
     tipsTotal: app.state.tipsTotal ?? 0,
@@ -207,70 +222,83 @@ export function useSync() {
   const totalsRef = useRef(localTotals);
   useEffect(() => { totalsRef.current = localTotals; }, [localTotals]);
 
-  // PUSH: enviar mis totales periódicamente cuando estoy en sesión
-  useEffect(() => {
-    if (config.role === 'idle' || !config.scriptUrl || !config.code) return;
-
-    let cancelled = false;
-    const send = async () => {
-      try {
-        await callScript(config.scriptUrl, {
-          action: 'pushTotals',
-          username: config.username,
-          code: config.code,
-          totals: totalsRef.current,
-        });
-        if (!cancelled) setLastError('');
-      } catch (e) {
-        if (!cancelled) setLastError(e instanceof Error ? e.message : String(e));
-      }
-    };
-    void send();
-    const id = window.setInterval(send, PUSH_INTERVAL_MS);
-    return () => { cancelled = true; window.clearInterval(id); };
-  }, [config.role, config.scriptUrl, config.code, config.username]);
-
-  // Push inmediato cuando los totales cambian (debounce simple)
-  const pushDebounceRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (config.role === 'idle' || !config.scriptUrl || !config.code) return;
-    if (pushDebounceRef.current) window.clearTimeout(pushDebounceRef.current);
-    pushDebounceRef.current = window.setTimeout(() => {
-      callScript(config.scriptUrl, {
-        action: 'pushTotals',
+  const pushNow = useCallback(async () => {
+    if (config.role === 'idle' || !config.code || !config.username) return;
+    try {
+      const { error } = await supabase.from('shift_users').upsert({
+        shift_code: config.code,
         username: config.username,
-        code: config.code,
+        is_host: config.role === 'host',
         totals: totalsRef.current,
-      }).catch(() => undefined);
-    }, 1200);
-    return () => {
-      if (pushDebounceRef.current) window.clearTimeout(pushDebounceRef.current);
-    };
-  }, [localTotals, config.role, config.scriptUrl, config.code, config.username]);
+        last_seen: new Date().toISOString(),
+      });
+      if (error) throw error;
+      setLastError('');
+    } catch (e) {
+      setLastError(e instanceof Error ? e.message : String(e));
+    }
+  }, [config.role, config.code, config.username]);
 
-  // PULL: traer la lista de usuarios remotos
+  // Heartbeat
   useEffect(() => {
-    if (config.role === 'idle' || !config.scriptUrl || !config.code) {
+    if (config.role === 'idle') return;
+    void pushNow();
+    const id = window.setInterval(pushNow, PUSH_INTERVAL_MS);
+    return () => window.clearInterval(id);
+  }, [config.role, pushNow]);
+
+  // Debounced push when totals change
+  const debounceRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (config.role === 'idle') return;
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(() => { void pushNow(); }, 800);
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [localTotals, config.role, pushNow]);
+
+  // ---------------------- realtime pull ----------------------
+
+  const refresh = useCallback(async (code: string) => {
+    const { data, error } = await supabase
+      .from('shift_users')
+      .select('username, is_host, totals, last_seen')
+      .eq('shift_code', code);
+    if (error) { setLastError(error.message); return; }
+    const now = Date.now();
+    setRemoteUsers((data ?? []).map(r => ({
+      username: r.username,
+      isHost: r.is_host,
+      lastSeen: r.last_seen,
+      online: now - new Date(r.last_seen).getTime() < ONLINE_WINDOW_MS,
+      totals: { ...EMPTY_TOTALS, ...((r.totals as Partial<SyncTotals>) || {}) },
+    })));
+  }, []);
+
+  useEffect(() => {
+    if (config.role === 'idle' || !config.code) {
       setRemoteUsers([]);
       return;
     }
-    let cancelled = false;
-    const pull = async () => {
-      try {
-        const r = await callScript<{ users: RemoteUser[] }>(config.scriptUrl, {
-          action: 'pullTotals',
-          code: config.code,
-          username: config.username,
-        });
-        if (!cancelled) setRemoteUsers(r.users || []);
-      } catch (e) {
-        if (!cancelled) setLastError(e instanceof Error ? e.message : String(e));
-      }
+    void refresh(config.code);
+    const channel = supabase
+      .channel(`shift:${config.code}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shift_users', filter: `shift_code=eq.${config.code}` },
+        () => { void refresh(config.code); },
+      )
+      .subscribe();
+
+    // Re-evaluate "online" every 10s even without server events
+    const id = window.setInterval(() => { void refresh(config.code); }, 10000);
+
+    return () => {
+      window.clearInterval(id);
+      void supabase.removeChannel(channel);
     };
-    void pull();
-    const id = window.setInterval(pull, PULL_INTERVAL_MS);
-    return () => { cancelled = true; window.clearInterval(id); };
-  }, [config.role, config.scriptUrl, config.code, config.username]);
+  }, [config.role, config.code, refresh]);
 
   return {
     config,
