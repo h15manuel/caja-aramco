@@ -9,26 +9,14 @@ import { formatCLP } from '@/lib/format';
 
 export function SyncSettings() {
   const {
-    config, update, registerUser, openShift, joinShift, leaveShift,
+    config, registerUser, openShift, joinShift, leaveShift,
     remoteUsers, lastError, busy,
   } = useSyncCtx();
 
-  const [urlDraft, setUrlDraft] = useState(config.scriptUrl);
   const [userDraft, setUserDraft] = useState(config.username);
   const [joinCode, setJoinCode] = useState('');
 
-  const saveUrl = () => {
-    const v = urlDraft.trim();
-    if (!/^https:\/\/script\.google\.com\/.+\/exec/.test(v)) {
-      toast.error('Debe ser una URL de Apps Script terminada en /exec');
-      return;
-    }
-    update({ scriptUrl: v });
-    toast.success('URL guardada');
-  };
-
   const handleRegister = async () => {
-    if (!config.scriptUrl) { toast.error('Configura primero la URL'); return; }
     const u = userDraft.trim();
     if (!u) { toast.error('Escribe un nombre de usuario'); return; }
     const ok = await registerUser(u);
@@ -71,25 +59,11 @@ export function SyncSettings() {
         <h2 className="text-lg font-semibold">Sincronización</h2>
       </div>
 
-      {/* 1. URL del script */}
-      <div className="space-y-1.5">
-        <Label htmlFor="sync-url">URL del Apps Script</Label>
-        <div className="flex gap-2">
-          <Input
-            id="sync-url"
-            placeholder="https://script.google.com/.../exec"
-            value={urlDraft}
-            onChange={e => setUrlDraft(e.target.value)}
-            className="flex-1"
-          />
-          <Button onClick={saveUrl} variant="secondary">Guardar</Button>
-        </div>
-        <p className="text-[11px] text-muted-foreground">
-          Pega aquí la URL del Web App de tu Apps Script (terminada en <code>/exec</code>).
-        </p>
-      </div>
+      <p className="text-[11px] text-muted-foreground -mt-2">
+        Sincronización en tiempo real. Sin configuración: solo elige un nombre y abre o únete a un turno con un código de 6 dígitos.
+      </p>
 
-      {/* 2. Nombre de usuario */}
+      {/* 1. Nombre de usuario */}
       <div className="space-y-1.5">
         <Label htmlFor="sync-user">Tu nombre de usuario</Label>
         <div className="flex gap-2">
@@ -102,7 +76,7 @@ export function SyncSettings() {
             className="flex-1"
           />
           <Button onClick={handleRegister} disabled={busy || inSession}>
-            <UserPlus className="w-4 h-4 mr-1" /> Registrar
+            <UserPlus className="w-4 h-4 mr-1" /> Guardar
           </Button>
         </div>
         {config.username && (
@@ -112,7 +86,7 @@ export function SyncSettings() {
         )}
       </div>
 
-      {/* 3. Turno */}
+      {/* 2. Turno */}
       {!inSession ? (
         <div className="grid gap-3">
           <Button onClick={handleOpen} disabled={busy || !config.username}>
@@ -165,7 +139,7 @@ export function SyncSettings() {
                       />
                       <span className={isMe ? 'font-semibold' : ''}>{u.username}</span>
                       {u.isHost && <span className="text-[9px] uppercase text-primary">host</span>}
-                      {isMe && <span className="text-[9px] uppercase text-muted-foreground">(tú · local)</span>}
+                      {isMe && <span className="text-[9px] uppercase text-muted-foreground">(tú)</span>}
                       {!isMe && (
                         <span className={`text-[9px] uppercase ${u.online ? 'text-green-500' : 'text-muted-foreground'}`}>
                           {u.online ? 'online' : 'offline'}
