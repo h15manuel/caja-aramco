@@ -80,7 +80,16 @@ function CreditSubgroup({ group, gi, onEdit, cashboxNames }: { group: CashEntry[
 }
 
 export default function Dashboard() {
-  const { state, setZAmount, closeShift, depositsTotal, cashCreditTotal, couponTotal, incomingCashCreditTotal, meta, efectivoReal, diferencia, status, activeCashbox, cashboxes } = useApp();
+  const app = useApp();
+  const { state, setZAmount, closeShift, depositsTotal, couponTotal, incomingCashCreditTotal, efectivoReal, activeCashbox, cashboxes } = app;
+  const { remoteIncomingCashCreditTotal } = useSyncCtx();
+  // Combina créditos en efectivo locales + los que me asignaron remotos online.
+  const cashCreditTotal = app.cashCreditTotal + remoteIncomingCashCreditTotal;
+  const totalIncomingCashCredit = incomingCashCreditTotal + remoteIncomingCashCreditTotal;
+  const meta = state.zAmount - state.tipsTotal - cashCreditTotal - couponTotal;
+  const diferencia = efectivoReal - meta;
+  const status: 'cuadrada' | 'sobrante' | 'faltante' =
+    diferencia === 0 ? 'cuadrada' : diferencia > 0 ? 'sobrante' : 'faltante';
   const cashboxNames = React.useMemo(() => new Map(cashboxes.map(b => [b.id, b.name])), [cashboxes]);
   const [zInput, setZInput] = useState(state.zAmount > 0 ? state.zAmount.toString() : '');
 
