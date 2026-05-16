@@ -210,18 +210,25 @@ export function useSync() {
 
   // ---------------------- totals push ----------------------
 
-  const localTotals = useMemo<SyncTotals>(() => ({
-    zAmount: app.state.zAmount ?? 0,
-    tipsTotal: app.state.tipsTotal ?? 0,
-    cashDrawer: app.state.cashDrawer ?? 0,
-    depositsTotal: app.depositsTotal,
-    meta: app.meta,
-    efectivoReal: app.efectivoReal,
-    diferencia: app.diferencia,
-    status: app.status,
-  }), [
+  const localTotals = useMemo<SyncTotals>(() => {
+    const cashDrawer = app.state.cashDrawer ?? 0;
+    return {
+      zAmount: app.state.zAmount ?? 0,
+      tipsTotal: app.state.tipsTotal ?? 0,
+      cashDrawer,
+      depositsTotal: app.depositsTotal,
+      cashCreditTotal: app.cashCreditTotal,
+      couponTotal: app.couponTotal,
+      totalDinero: app.depositsTotal + cashDrawer + app.cashCreditTotal + app.couponTotal,
+      meta: app.meta,
+      efectivoReal: app.efectivoReal,
+      diferencia: app.diferencia,
+      status: app.status,
+    };
+  }, [
     app.state.zAmount, app.state.tipsTotal, app.state.cashDrawer,
-    app.depositsTotal, app.meta, app.efectivoReal, app.diferencia, app.status,
+    app.depositsTotal, app.cashCreditTotal, app.couponTotal,
+    app.meta, app.efectivoReal, app.diferencia, app.status,
   ]);
 
   const totalsRef = useRef(localTotals);
