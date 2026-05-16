@@ -73,9 +73,10 @@ export function CashboxManagerDialog() {
 
   const activeLocalBoxes = visibleLocalBoxes.filter(b => b.active ?? true);
   const localCashChica = activeLocalBoxes.reduce((sum, b) => sum + b.cashDrawer, 0);
-  const remoteCashChica = otherRemote
-    .filter(u => u.online)
-    .reduce((sum, u) => sum + (u.totals.cashDrawer ?? 0), 0);
+  // Solo el host puede ver datos financieros de los demás
+  const remoteCashChica = isHost
+    ? otherRemote.filter(u => u.online).reduce((sum, u) => sum + (u.totals.cashDrawer ?? 0), 0)
+    : 0;
   const totalCashChica = localCashChica + remoteCashChica;
   const peopleCount = activeLocalBoxes.length + otherRemote.filter(u => u.online).length;
 
