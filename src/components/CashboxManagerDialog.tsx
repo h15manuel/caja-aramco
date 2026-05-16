@@ -343,9 +343,9 @@ function RemoteUserDialog({ user, onClose }: { user: RemoteUser | null; onClose:
   );
 }
 
-function Cell({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function Cell({ label, value, accent, className }: { label: string; value: string; accent?: boolean; className?: string }) {
   return (
-    <div className="rounded-xl bg-card border border-border p-2.5 text-center">
+    <div className={`rounded-xl bg-card border border-border p-2.5 text-center ${className ?? ''}`}>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
       <p className={`text-base font-bold mt-0.5 ${accent ? 'text-primary' : 'text-foreground'}`}>{value}</p>
     </div>
