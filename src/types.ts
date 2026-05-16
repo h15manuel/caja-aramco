@@ -19,6 +19,12 @@ export interface CashEntry {
    * de la caja de origen (aparece como crédito normal en el origen).
    */
   targetCashboxId?: string;
+  /**
+   * Si está definido, el crédito en efectivo se envía a una persona remota
+   * (sincronizada online). Se comporta igual que targetCashboxId pero hacia
+   * un usuario remoto identificado por username (normalizado en minúsculas).
+   */
+  targetUsername?: string;
   denominations?: number; // depósito: denominación única usada (e.g. 20000)
   date: string; // ISO string
   time: string; // HH:mm
