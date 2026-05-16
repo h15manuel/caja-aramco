@@ -325,9 +325,12 @@ function RemoteUserDialog({ user, onClose }: { user: RemoteUser | null; onClose:
               <Cell label="Total Desglose" value={formatCLP(t.zAmount)} />
               <Cell label="Caja Chica" value={formatCLP(t.cashDrawer)} />
               <Cell label="Meta" value={formatCLP(t.meta)} />
-              <Cell label="Efectivo Real" value={formatCLP(t.efectivoReal)} accent />
-              <Cell label="Avances" value={formatCLP(t.depositsTotal)} />
+              <Cell label="Total Dinero" value={formatCLP(t.totalDinero)} accent />
+              <Cell label="Total Avances" value={formatCLP(t.depositsTotal)} />
               <Cell label="Propinas" value={formatCLP(t.tipsTotal)} />
+              <Cell label="Total Créditos" value={formatCLP(t.cashCreditTotal)} />
+              <Cell label="Total Cupones" value={formatCLP(t.couponTotal)} />
+              <Cell label="Efectivo Real" value={formatCLP(t.efectivoReal)} className="col-span-2" accent />
             </div>
 
             <p className="text-[10px] text-muted-foreground text-center">
@@ -340,9 +343,9 @@ function RemoteUserDialog({ user, onClose }: { user: RemoteUser | null; onClose:
   );
 }
 
-function Cell({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function Cell({ label, value, accent, className }: { label: string; value: string; accent?: boolean; className?: string }) {
   return (
-    <div className="rounded-xl bg-card border border-border p-2.5 text-center">
+    <div className={`rounded-xl bg-card border border-border p-2.5 text-center ${className ?? ''}`}>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
       <p className={`text-base font-bold mt-0.5 ${accent ? 'text-primary' : 'text-foreground'}`}>{value}</p>
     </div>

@@ -10,6 +10,9 @@ export interface SyncTotals {
   tipsTotal: number;
   cashDrawer: number;
   depositsTotal: number;
+  cashCreditTotal: number;
+  couponTotal: number;
+  totalDinero: number;
   meta: number;
   efectivoReal: number;
   diferencia: number;
@@ -76,6 +79,7 @@ function genCode(): string {
 
 const EMPTY_TOTALS: SyncTotals = {
   zAmount: 0, tipsTotal: 0, cashDrawer: 0, depositsTotal: 0,
+  cashCreditTotal: 0, couponTotal: 0, totalDinero: 0,
   meta: 0, efectivoReal: 0, diferencia: 0, status: 'cuadrada',
 };
 
@@ -140,13 +144,15 @@ export function useSync() {
         last_seen: new Date().toISOString(),
       });
 
+      // El host (caja principal) pasa a llamarse como el usuario
+      if (app.cashboxes[0]) app.renameCashbox(app.cashboxes[0].id, config.username);
       update({ role: 'host', code, shiftId, hostUsername: config.username });
       return code;
     } catch (e) {
       setLastError(e instanceof Error ? e.message : String(e));
       return null;
     } finally { setBusy(false); }
-  }, [config.username, update]);
+  }, [config.username, update, app]);
 
   const joinShift = useCallback(async (code: string) => {
     setBusy(true); setLastError('');
@@ -175,6 +181,8 @@ export function useSync() {
       });
       if (e2) throw e2;
 
+      // Renombra la caja principal con el usuario sincronizado
+      if (app.cashboxes[0]) app.renameCashbox(app.cashboxes[0].id, config.username);
       update({
         role: shift.host_username === config.username ? 'host' : 'guest',
         code: c,
@@ -186,7 +194,7 @@ export function useSync() {
       setLastError(e instanceof Error ? e.message : String(e));
       return false;
     } finally { setBusy(false); }
-  }, [config.username, update]);
+  }, [config.username, update, app]);
 
   const leaveShift = useCallback(async () => {
     setBusy(true);
@@ -206,18 +214,25 @@ export function useSync() {
 
   // ---------------------- totals push ----------------------
 
-  const localTotals = useMemo<SyncTotals>(() => ({
-    zAmount: app.state.zAmount ?? 0,
-    tipsTotal: app.state.tipsTotal ?? 0,
-    cashDrawer: app.state.cashDrawer ?? 0,
-    depositsTotal: app.depositsTotal,
-    meta: app.meta,
-    efectivoReal: app.efectivoReal,
-    diferencia: app.diferencia,
-    status: app.status,
-  }), [
+  const localTotals = useMemo<SyncTotals>(() => {
+    const cashDrawer = app.state.cashDrawer ?? 0;
+    return {
+      zAmount: app.state.zAmount ?? 0,
+      tipsTotal: app.state.tipsTotal ?? 0,
+      cashDrawer,
+      depositsTotal: app.depositsTotal,
+      cashCreditTotal: app.cashCreditTotal,
+      couponTotal: app.couponTotal,
+      totalDinero: app.depositsTotal + cashDrawer + app.cashCreditTotal + app.couponTotal,
+      meta: app.meta,
+      efectivoReal: app.efectivoReal,
+      diferencia: app.diferencia,
+      status: app.status,
+    };
+  }, [
     app.state.zAmount, app.state.tipsTotal, app.state.cashDrawer,
-    app.depositsTotal, app.meta, app.efectivoReal, app.diferencia, app.status,
+    app.depositsTotal, app.cashCreditTotal, app.couponTotal,
+    app.meta, app.efectivoReal, app.diferencia, app.status,
   ]);
 
   const totalsRef = useRef(localTotals);
