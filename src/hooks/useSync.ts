@@ -17,6 +17,8 @@ export interface SyncTotals {
   efectivoReal: number;
   diferencia: number;
   status: 'cuadrada' | 'sobrante' | 'faltante';
+  /** Map normalizado username -> monto de créditos en efectivo enviados a esa persona */
+  outgoingCashCredits?: Record<string, number>;
 }
 
 export interface RemoteUser {
