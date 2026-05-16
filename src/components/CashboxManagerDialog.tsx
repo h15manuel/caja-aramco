@@ -33,6 +33,7 @@ export function CashboxManagerDialog() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [viewingUser, setViewingUser] = useState<RemoteUser | null>(null);
 
   const handleAdd = () => {
     if (!newName.trim()) return;
