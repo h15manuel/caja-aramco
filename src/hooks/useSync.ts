@@ -10,6 +10,9 @@ export interface SyncTotals {
   tipsTotal: number;
   cashDrawer: number;
   depositsTotal: number;
+  cashCreditTotal: number;
+  couponTotal: number;
+  totalDinero: number;
   meta: number;
   efectivoReal: number;
   diferencia: number;
