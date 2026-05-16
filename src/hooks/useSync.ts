@@ -83,6 +83,7 @@ const EMPTY_TOTALS: SyncTotals = {
   zAmount: 0, tipsTotal: 0, cashDrawer: 0, depositsTotal: 0,
   cashCreditTotal: 0, couponTotal: 0, totalDinero: 0,
   meta: 0, efectivoReal: 0, diferencia: 0, status: 'cuadrada',
+  outgoingCashCredits: {},
 };
 
 // ---------- hook -----------------------------------------------------------
