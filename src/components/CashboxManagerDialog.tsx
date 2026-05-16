@@ -341,12 +341,11 @@ function RemoteUserDialog({ user, onClose }: { user: RemoteUser | null; onClose:
               <Cell label="Total Desglose" value={formatCLP(t.zAmount)} />
               <Cell label="Caja Chica" value={formatCLP(t.cashDrawer)} />
               <Cell label="Meta" value={formatCLP(t.meta)} />
-              <Cell label="Total Dinero" value={formatCLP(t.totalDinero)} accent />
+              <Cell label="Total Dinero" value={formatCLP(t.totalDinero)} className="col-span-2" accent />
               <Cell label="Total Avances" value={formatCLP(t.depositsTotal)} />
               <Cell label="Propinas" value={formatCLP(t.tipsTotal)} />
               <Cell label="Total Créditos" value={formatCLP(t.cashCreditTotal)} />
               <Cell label="Total Cupones" value={formatCLP(t.couponTotal)} />
-              <Cell label="Efectivo Real" value={formatCLP(t.efectivoReal)} className="col-span-2" accent />
             </div>
 
             <p className="text-[10px] text-muted-foreground text-center">
