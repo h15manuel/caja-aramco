@@ -194,7 +194,7 @@ export function useSync() {
       setLastError(e instanceof Error ? e.message : String(e));
       return false;
     } finally { setBusy(false); }
-  }, [config.username, update]);
+  }, [config.username, update, app]);
 
   const leaveShift = useCallback(async () => {
     setBusy(true);
