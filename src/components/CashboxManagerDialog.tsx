@@ -259,7 +259,7 @@ export function CashboxManagerDialog() {
               {isHost && (
                 <>
                   <span className="text-xs text-muted-foreground tabular-nums">
-                    {formatCLP(u.totals.efectivoReal)}
+                    {formatCLP(u.totals.totalDinero)}
                   </span>
                   <button
                     onClick={() => setViewingUser(u)}
