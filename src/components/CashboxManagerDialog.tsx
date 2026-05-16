@@ -246,9 +246,21 @@ export function CashboxManagerDialog() {
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {formatCLP(u.totals.efectivoReal)}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {formatCLP(u.totals.efectivoReal)}
+                    </span>
+                    {!isMe && (
+                      <button
+                        onClick={() => setViewingUser(u)}
+                        className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-primary"
+                        aria-label={`Ver caja de ${u.username}`}
+                        title="Ver caja"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
