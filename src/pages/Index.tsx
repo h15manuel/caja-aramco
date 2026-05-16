@@ -170,7 +170,7 @@ export default function Dashboard() {
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Créditos</p>
           <p className="text-xl font-bold text-info shield-blur mt-1">{formatCLP(cashCreditTotal)}</p>
           <p className="text-[9px] text-muted-foreground leading-tight">
-            {incomingCashCreditTotal > 0 ? `Incl. ${formatCLP(incomingCashCreditTotal)} recibido` : 'Se descuenta de la Meta'}
+            {totalIncomingCashCredit > 0 ? `Incl. ${formatCLP(totalIncomingCashCredit)} recibido` : 'Se descuenta de la Meta'}
           </p>
         </div>
         <CouponDialog>
