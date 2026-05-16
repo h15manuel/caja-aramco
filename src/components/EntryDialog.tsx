@@ -162,9 +162,14 @@ export default function EntryDialog({ type, children }: Props) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={NO_TARGET}>Mantener en mi caja</SelectItem>
-                      {targetCandidates.map(b => (
+                      {localTargets.map(b => (
                         <SelectItem key={b.id} value={b.id}>
                           {b.name}
+                        </SelectItem>
+                      ))}
+                      {remoteTargets.map(u => (
+                        <SelectItem key={`r-${u.username}`} value={`${REMOTE_PREFIX}${u.username.toLowerCase()}`}>
+                          {u.username} <span className="text-[9px] uppercase text-primary ml-1">online</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
