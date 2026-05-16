@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
+import { useSyncCtx } from '@/contexts/SyncContext';
 import { formatCLP, parseCLPInput } from '@/lib/format';
 import { EntryType, CashEntry, formatDenominations } from '@/types';
 import QuickCountModal from '@/components/QuickCountModal';
