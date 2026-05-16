@@ -1,19 +1,11 @@
 import { useState } from 'react';
-import { Cloud, CloudOff, Copy, Eye, LogIn, LogOut, RefreshCw, UserPlus, Wifi, CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react';
+import { Cloud, CloudOff, Copy, LogIn, LogOut, RefreshCw, UserPlus, Wifi } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useSyncCtx } from '@/contexts/SyncContext';
-import type { RemoteUser } from '@/hooks/useSync';
 import { toast } from 'sonner';
 import { formatCLP } from '@/lib/format';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 
 export function SyncSettings() {
   const {
@@ -23,7 +15,6 @@ export function SyncSettings() {
 
   const [userDraft, setUserDraft] = useState(config.username);
   const [joinCode, setJoinCode] = useState('');
-  const [viewingUser, setViewingUser] = useState<RemoteUser | null>(null);
 
   const handleRegister = async () => {
     const u = userDraft.trim();
@@ -158,17 +149,6 @@ export function SyncSettings() {
                     <span className="text-xs text-muted-foreground tabular-nums shrink-0">
                       {formatCLP(u.totals.efectivoReal)}
                     </span>
-                    {!isMe && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7 shrink-0"
-                        onClick={() => setViewingUser(u)}
-                        title="Ver caja"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                      </Button>
-                    )}
                   </li>
                 );
               })}
@@ -183,69 +163,6 @@ export function SyncSettings() {
       {lastError && (
         <p className="text-[11px] text-destructive">⚠ {lastError}</p>
       )}
-
-      <RemoteUserDialog user={viewingUser} onClose={() => setViewingUser(null)} />
-    </div>
-  );
-}
-
-function RemoteUserDialog({ user, onClose }: { user: RemoteUser | null; onClose: () => void }) {
-  const t = user?.totals;
-  const statusCfg = {
-    cuadrada: { label: 'CAJA CUADRADA', Icon: CheckCircle2, cls: 'text-green-500' },
-    sobrante: { label: 'SOBRANTE', Icon: TrendingUp, cls: 'text-info' },
-    faltante: { label: 'FALTANTE', Icon: TrendingDown, cls: 'text-destructive' },
-  } as const;
-  const sc = t ? statusCfg[t.status] : null;
-
-  return (
-    <Dialog open={!!user} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="rounded-3xl max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Wifi className={`w-4 h-4 ${user?.online ? 'text-green-500' : 'text-muted-foreground/40'}`} />
-            Caja de {user?.username}
-            {user?.isHost && <span className="text-[10px] uppercase text-primary">host</span>}
-          </DialogTitle>
-          <DialogDescription>
-            Vista en tiempo real. {user?.online ? 'En línea' : 'Desconectado'}.
-          </DialogDescription>
-        </DialogHeader>
-
-        {t && sc && (
-          <div className="space-y-2">
-            <div className={`rounded-2xl p-3 flex items-center gap-3 bg-secondary/50`}>
-              <sc.Icon className={`w-5 h-5 ${sc.cls}`} />
-              <div>
-                <p className={`font-bold text-base ${sc.cls}`}>{sc.label}</p>
-                <p className="text-sm opacity-80">{formatCLP(Math.abs(t.diferencia))}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <Cell label="Total Desglose" value={formatCLP(t.zAmount)} />
-              <Cell label="Caja Chica" value={formatCLP(t.cashDrawer)} />
-              <Cell label="Meta" value={formatCLP(t.meta)} />
-              <Cell label="Efectivo Real" value={formatCLP(t.efectivoReal)} accent />
-              <Cell label="Avances" value={formatCLP(t.depositsTotal)} />
-              <Cell label="Propinas" value={formatCLP(t.tipsTotal)} />
-            </div>
-
-            <p className="text-[10px] text-muted-foreground text-center">
-              Actualizado: {new Date(user!.lastSeen).toLocaleTimeString()}
-            </p>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function Cell({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div className="m3-surface p-2.5 text-center">
-      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
-      <p className={`text-base font-bold mt-0.5 ${accent ? 'text-primary' : 'text-foreground'}`}>{value}</p>
     </div>
   );
 }
