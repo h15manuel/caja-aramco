@@ -95,6 +95,17 @@ export function useSync() {
 
   useEffect(() => { saveConfig(config); }, [config]);
 
+  // Mantener la caja principal (cashbox 0) siempre con el nombre del usuario
+  // sincronizado mientras haya un turno activo (host o guest).
+  useEffect(() => {
+    if (config.role === 'idle' || !config.username) return;
+    const principal = app.cashboxes[0];
+    if (!principal) return;
+    if (normUser(principal.name) !== normUser(config.username)) {
+      app.renameCashbox(principal.id, config.username);
+    }
+  }, [config.role, config.username, app]);
+
   const update = useCallback((patch: Partial<SyncConfig>) => {
     setConfig(c => ({ ...c, ...patch }));
   }, []);
