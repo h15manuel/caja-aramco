@@ -1,19 +1,11 @@
 import { useState } from 'react';
-import { Cloud, CloudOff, Copy, Eye, LogIn, LogOut, RefreshCw, UserPlus, Wifi, CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react';
+import { Cloud, CloudOff, Copy, LogIn, LogOut, RefreshCw, UserPlus, Wifi } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useSyncCtx } from '@/contexts/SyncContext';
-import type { RemoteUser } from '@/hooks/useSync';
 import { toast } from 'sonner';
 import { formatCLP } from '@/lib/format';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 
 export function SyncSettings() {
   const {
@@ -23,7 +15,6 @@ export function SyncSettings() {
 
   const [userDraft, setUserDraft] = useState(config.username);
   const [joinCode, setJoinCode] = useState('');
-  const [viewingUser, setViewingUser] = useState<RemoteUser | null>(null);
 
   const handleRegister = async () => {
     const u = userDraft.trim();
