@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EntryType } from '@/types';
 import { useApp } from '@/contexts/AppContext';
+import { useSyncCtx } from '@/contexts/SyncContext';
 import { formatCLP, parseCLPInput, generateId } from '@/lib/format';
 import { ArrowDownCircle, CreditCard, Banknote, Plus, Ticket, Users } from 'lucide-react';
 import DenominationPicker from './DenominationPicker';
